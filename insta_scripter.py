@@ -127,20 +127,34 @@ def inject_maximalist_css():
         border-bottom: none !important;
         border-radius: 0px !important;
         padding: 12px 24px !important;
-        color: #111111 !important;
         box-shadow: 3px -3px 0px 0px #111111 !important;
         transition: all 0.15s ease-in-out;
+    }
+    
+    /* Ensure tab text color inside tabs is black when not selected */
+    .stTabs [data-baseweb="tab"] p,
+    .stTabs [data-baseweb="tab"] span,
+    .stTabs [data-baseweb="tab"] div {
+        color: #111111 !important;
     }
 
     .stTabs [data-baseweb="tab"]:hover {
         background-color: #F56040 !important;
+    }
+    .stTabs [data-baseweb="tab"]:hover p,
+    .stTabs [data-baseweb="tab"]:hover span,
+    .stTabs [data-baseweb="tab"]:hover div {
         color: #FFFFFF !important;
     }
 
     .stTabs [aria-selected="true"] {
         background: linear-gradient(45deg, #E1306C, #F56040) !important;
-        color: #FFFFFF !important;
         box-shadow: 3px -3px 0px 0px #833AB4 !important;
+    }
+    .stTabs [aria-selected="true"] p,
+    .stTabs [aria-selected="true"] span,
+    .stTabs [aria-selected="true"] div {
+        color: #FFFFFF !important;
     }
 
     /* Custom Input and TextArea widgets */
@@ -155,13 +169,22 @@ def inject_maximalist_css():
         box-shadow: inset 2px 2px 0px 0px rgba(0,0,0,0.1) !important;
     }
 
+    /* Text area disabled state high contrast styling (important for script timeline display) */
+    .stTextArea textarea:disabled, 
+    .stTextArea textarea[disabled] {
+        color: #111111 !important;
+        -webkit-text-fill-color: #111111 !important;
+        background-color: #FFFFFF !important;
+        opacity: 1 !important;
+    }
+
     .stTextArea textarea:focus {
         border-color: #E1306C !important;
         box-shadow: 4px 4px 0px 0px #111111 !important;
     }
 
-    /* Button Styling */
-    div.stButton > button {
+    /* Button & Download Button Styling */
+    div.stButton > button, div.stDownloadButton > button {
         background-color: #111111 !important;
         color: #FFFFFF !important;
         font-family: 'Outfit', sans-serif !important;
@@ -176,14 +199,14 @@ def inject_maximalist_css():
         transition: all 0.2s ease !important;
     }
 
-    div.stButton > button:hover {
+    div.stButton > button:hover, div.stDownloadButton > button:hover {
         background: linear-gradient(45deg, #833AB4, #E1306C, #F56040) !important;
         color: #FFFFFF !important;
         box-shadow: 5px 5px 0px 0px #111111 !important;
         transform: translate(-3px, -3px) !important;
     }
 
-    div.stButton > button:active {
+    div.stButton > button:active, div.stDownloadButton > button:active {
         transform: translate(2px, 2px) !important;
         box-shadow: 1px 1px 0px 0px #111111 !important;
     }
