@@ -729,9 +729,148 @@ with col_sim:
         </div>
         """
 
-    # Inject layout & render it
-    st.markdown(wireframe_html, unsafe_allow_html=True)
-    
+    # Inject layout & render it inside an isolated iframe component
+    iframe_src = f"""
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <meta charset="utf-8">
+        <style>
+        @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&family=Inter:wght@300;400;500;600;700&family=Lora:ital,wght@0,400;0,600;1,400&family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&family=Syne:wght@500;700;800&family=Fira+Code:wght@400;500&display=swap');
+
+        :root {{
+            --grid-gap: {grid_gap}px;
+            --border-radius: {border_radius}px;
+            --border-thickness: {border_thickness}px;
+            --accent-color: #7C3AED;
+            --accent-opacity: {accent_opacity / 100.0};
+            --slate-color: #9CA3AF;
+        }}
+
+        body {{
+            margin: 0;
+            padding: 0;
+            background-color: #121214;
+            color: #F3F4F6;
+            font-family: 'Inter', sans-serif;
+            overflow: hidden;
+        }}
+
+        .wireframe-workspace {{
+            position: relative;
+            background-color: #0E0E10;
+            border: 1px solid var(--slate-color);
+            border-radius: var(--border-radius);
+            padding: 24px;
+            min-height: 520px;
+            box-sizing: border-box;
+            transition: all 0.3s ease;
+            overflow: hidden;
+        }}
+
+        .grid-overlay {{
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 1;
+        }}
+        .grid-overlay-12 {{
+            background-image: repeating-linear-gradient(to right, 
+                rgba(124, 58, 237, 0.04) 0px, 
+                rgba(124, 58, 237, 0.04) calc((100% - 11 * var(--grid-gap)) / 12), 
+                transparent calc((100% - 11 * var(--grid-gap)) / 12), 
+                transparent calc((100% - 11 * var(--grid-gap)) / 12 + var(--grid-gap))
+            );
+        }}
+        .grid-overlay-4 {{
+            background-image: repeating-linear-gradient(to right, 
+                rgba(124, 58, 237, 0.04) 0px, 
+                rgba(124, 58, 237, 0.04) calc((100% - 3 * var(--grid-gap)) / 4), 
+                transparent calc((100% - 3 * var(--grid-gap)) / 4), 
+                transparent calc((100% - 3 * var(--grid-gap)) / 4 + var(--grid-gap))
+            );
+        }}
+        .grid-overlay-modular {{
+            background-image: 
+                repeating-linear-gradient(to right, 
+                    rgba(124, 58, 237, 0.03) 0px, 
+                    rgba(124, 58, 237, 0.03) 80px, 
+                    transparent 80px, 
+                    transparent calc(80px + var(--grid-gap))
+                ),
+                repeating-linear-gradient(to bottom, 
+                    rgba(124, 58, 237, 0.03) 0px, 
+                    rgba(124, 58, 237, 0.03) 80px, 
+                    transparent 80px, 
+                    transparent calc(80px + var(--grid-gap))
+                );
+        }}
+
+        .wireframe-element {{
+            position: relative;
+            border: var(--border-thickness) solid var(--slate-color);
+            border-radius: var(--border-radius);
+            background-color: rgba(26, 26, 30, 0.6);
+            backdrop-filter: blur(2px);
+            padding: 14px;
+            z-index: 2;
+            transition: all 0.3s ease;
+        }}
+        .wireframe-element:hover {{
+            border-color: var(--accent-color);
+            box-shadow: 0 0 12px rgba(124, 58, 237, calc(var(--accent-opacity) * 0.4));
+        }}
+        .wireframe-label {{
+            position: absolute;
+            top: -8px;
+            left: 8px;
+            font-family: 'Fira Code', monospace;
+            font-size: 8px;
+            color: var(--slate-color);
+            background-color: #0E0E10;
+            padding: 0 4px;
+            border: 1px solid var(--slate-color);
+            border-radius: 3px;
+            line-height: 1;
+            text-transform: uppercase;
+        }}
+        .wireframe-element:hover .wireframe-label {{
+            color: var(--accent-color);
+            border-color: var(--accent-color);
+        }}
+
+        .dim-indicator {{
+            stroke: var(--slate-color);
+            stroke-width: 1;
+            stroke-dasharray: 2 2;
+        }}
+        .dim-text {{
+            fill: var(--slate-color);
+            font-family: 'Fira Code', monospace;
+            font-size: 9px;
+        }}
+
+        .color-swatch {{
+            display: inline-block;
+            width: 42px;
+            height: 42px;
+            border-radius: 6px;
+            margin-right: 8px;
+            border: 1px solid #2D2D35;
+            vertical-align: middle;
+        }}
+        </style>
+    </head>
+    <body>
+        {wireframe_html}
+    </body>
+    </html>
+    """
+    st.components.v1.html(iframe_src, height=530, scrolling=False)
+
     st.write("")
     
     # 5. DESIGN TOKEN EXPORTER MECHANISM (JSON + Markdown)
