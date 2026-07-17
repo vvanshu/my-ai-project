@@ -234,6 +234,20 @@ def inject_maximalist_css():
         font-family: 'Space Mono', monospace;
         font-size: 0.85rem;
     }
+
+    /* High contrast text accessibility rules */
+    div[data-testid="stRadio"] label p, 
+    div[data-testid="stRadio"] label span, 
+    div[data-testid="stRadio"] div,
+    div[data-testid="stWidgetLabel"] p,
+    div[data-testid="stFileUploader"] p,
+    div[data-testid="stFileUploader"] span,
+    div[data-testid="stFileUploader"] small,
+    .max-card p,
+    .max-card label,
+    .max-card span:not(.max-badge) {
+        color: #111111 !important;
+    }
     </style>
     """, unsafe_allow_html=True)
 
