@@ -1,984 +1,994 @@
 import streamlit as st
-import pandas as pd
-import plotly.graph_objects as go
-import datetime
-import re
+import json
+import base64
 
 # ==============================================================================
-# 1. PAGE CONFIGURATION & THEME STYLING
+# 1. PAGE SETUP & SCANDINAVIAN DARK THEME CONFIG
 # ==============================================================================
 st.set_page_config(
-    page_title="VIO // Smart Stadium Command Center",
-    page_icon="🏟️",
+    page_title="DesignForge // Layout Blueprint Engine",
+    page_icon="📐",
     layout="wide",
     initial_sidebar_state="expanded"
 )
 
-# Custom CSS for high-fidelity stadium-themed dark UI
-CUSTOM_CSS = """
+# Custom Scandinavian Dark CSS Injection
+THEME_CSS = """
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Space+Grotesk:wght@400;600;700&family=Fira+Code:wght@400;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&family=Inter:wght@300;400;500;600;700&family=Lora:ital,wght@0,400;0,600;1,400&family=Playfair+Display:ital,wght@0,400;0,600;0,700;1,400&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&family=Syne:wght@500;700;800&family=Fira+Code:wght@400;500&display=swap');
 
-/* Main container and background override */
+/* Main Layout Styles */
 html, body, [data-testid="stAppViewContainer"], [data-testid="stHeader"] {
-    background-color: #0E1117 !important;
-    color: #FFFFFF !important;
-    font-family: 'Outfit', sans-serif !important;
+    background-color: #121214 !important;
+    color: #F3F4F6 !important;
+    font-family: 'Inter', sans-serif !important;
 }
 
-/* Sidebar Styling */
+/* Sidebar Custom Styling */
 [data-testid="stSidebar"] {
-    background-color: #121620 !important;
-    border-right: 1px solid #1E222A !important;
+    background-color: #1A1A1E !important;
+    border-right: 1px solid #2D2D35 !important;
 }
-
-/* Typography styles */
-h1, h2, h3, .stHeader {
+[data-testid="stSidebar"] .stMarkdown h1, 
+[data-testid="stSidebar"] .stMarkdown h2, 
+[data-testid="stSidebar"] .stMarkdown h3 {
+    color: #F3F4F6 !important;
     font-family: 'Space Grotesk', sans-serif !important;
-    font-weight: 700;
 }
 
-/* Dashboard Metric Cards */
-.metric-container {
-    display: flex;
-    justify-content: space-between;
-    gap: 1rem;
+/* Streamlit Native Input Element Overrides */
+div[data-baseweb="select"] > div {
+    background-color: #1A1A1E !important;
+    border: 1px solid #2D2D35 !important;
+    color: #F3F4F6 !important;
+    border-radius: 6px !important;
+}
+div[role="listbox"] {
+    background-color: #1A1A1E !important;
+    border: 1px solid #2D2D35 !important;
+}
+div[role="option"] {
+    color: #F3F4F6 !important;
+    background-color: #1A1A1E !important;
+}
+div[role="option"]:hover, div[role="option"][aria-selected="true"] {
+    background-color: #7C3AED !important;
+    color: #FFFFFF !important;
+}
+.stSlider [data-testid="stWidgetLabel"] {
+    color: #F3F4F6 !important;
+}
+
+/* Tab styling overrides */
+button[data-baseweb="tab"] {
+    background-color: transparent !important;
+    color: #9CA3AF !important;
+    border: none !important;
+    font-family: 'Space Grotesk', sans-serif !important;
+    font-weight: 500 !important;
+    padding: 10px 16px !important;
+}
+button[data-baseweb="tab"][aria-selected="true"] {
+    color: #7C3AED !important;
+    border-bottom: 2px solid #7C3AED !important;
+}
+
+/* Custom design components */
+.engine-header {
+    margin-bottom: 2rem;
+    border-bottom: 1px solid #2A2A30;
+    padding-bottom: 1.5rem;
+}
+.engine-title {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 2.2rem;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    background: linear-gradient(135deg, #F3F4F6 50%, #7C3AED 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+.engine-subtitle {
+    font-size: 0.95rem;
+    color: #9CA3AF;
+    margin-top: 0.2rem;
+}
+
+/* Card Surface component */
+.designforge-panel {
+    background-color: #1A1A1E;
+    border: 1px solid #2D2D35;
+    border-radius: 8px;
+    padding: 1.5rem;
     margin-bottom: 1.5rem;
 }
-.metric-card {
-    flex: 1;
-    background-color: #1E222A;
-    border: 1px solid #2D333F;
-    border-radius: 12px;
-    padding: 1.2rem;
-    text-align: center;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.25);
+
+/* Wireframe simulation workspace */
+.wireframe-workspace {
+    position: relative;
+    background-color: #0E0E10;
+    border: 1px solid var(--slate-color);
+    border-radius: var(--border-radius);
+    padding: 24px;
+    min-height: 520px;
+    box-sizing: border-box;
+    transition: all 0.3s ease;
+    overflow: hidden;
+}
+
+/* Grid guide overlay representation */
+.grid-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 1;
+}
+.grid-overlay-12 {
+    background-image: repeating-linear-gradient(to right, 
+        rgba(124, 58, 237, 0.04) 0px, 
+        rgba(124, 58, 237, 0.04) calc((100% - 11 * var(--grid-gap)) / 12), 
+        transparent calc((100% - 11 * var(--grid-gap)) / 12), 
+        transparent calc((100% - 11 * var(--grid-gap)) / 12 + var(--grid-gap))
+    );
+}
+.grid-overlay-4 {
+    background-image: repeating-linear-gradient(to right, 
+        rgba(124, 58, 237, 0.04) 0px, 
+        rgba(124, 58, 237, 0.04) calc((100% - 3 * var(--grid-gap)) / 4), 
+        transparent calc((100% - 3 * var(--grid-gap)) / 4), 
+        transparent calc((100% - 3 * var(--grid-gap)) / 4 + var(--grid-gap))
+    );
+}
+.grid-overlay-modular {
+    background-image: 
+        repeating-linear-gradient(to right, 
+            rgba(124, 58, 237, 0.03) 0px, 
+            rgba(124, 58, 237, 0.03) 80px, 
+            transparent 80px, 
+            transparent calc(80px + var(--grid-gap))
+        ),
+        repeating-linear-gradient(to bottom, 
+            rgba(124, 58, 237, 0.03) 0px, 
+            rgba(124, 58, 237, 0.03) 80px, 
+            transparent 80px, 
+            transparent calc(80px + var(--grid-gap))
+        );
+}
+
+/* Wireframe Elements */
+.wireframe-element {
+    position: relative;
+    border: var(--border-thickness) solid var(--slate-color);
+    border-radius: var(--border-radius);
+    background-color: rgba(26, 26, 30, 0.6);
+    backdrop-filter: blur(2px);
+    padding: 14px;
+    z-index: 2;
     transition: all 0.3s ease;
 }
-.metric-card:hover {
-    border-color: #0B58CA;
-    transform: translateY(-2px);
+.wireframe-element:hover {
+    border-color: var(--accent-color);
+    box-shadow: 0 0 12px rgba(124, 58, 237, calc(var(--accent-opacity) * 0.4));
 }
-.metric-title {
-    font-size: 0.8rem;
-    color: #8E929A;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.08em;
-}
-.metric-val {
-    font-size: 1.8rem;
-    color: #FFFFFF;
-    font-weight: 700;
-    margin: 0.4rem 0;
-    font-family: 'Space Grotesk', sans-serif;
-}
-.metric-desc {
-    font-size: 0.75rem;
-    color: #00FFCC;
-    font-weight: 500;
-}
-.metric-desc.urgent {
-    color: #FF4B4B;
-}
-
-/* Operational Registry Grid Cards */
-.profile-card {
-    background-color: #1E222A;
-    border: 1px solid #2D333F;
-    border-radius: 12px;
-    padding: 1.25rem;
-    margin-bottom: 1rem;
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
-    border-top: 4px solid #0B58CA;
-    transition: transform 0.2s ease;
-}
-.profile-card:hover {
-    transform: scale(1.01);
-}
-.profile-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 0.75rem;
-}
-.profile-name {
-    font-size: 1.15rem;
-    font-weight: 600;
-    color: #FFFFFF;
-}
-.profile-role {
-    font-size: 0.7rem;
-    font-weight: 600;
-    background-color: #0B58CA;
-    color: #FFFFFF;
-    padding: 0.2rem 0.5rem;
-    border-radius: 4px;
-    text-transform: uppercase;
-}
-.profile-info {
-    font-size: 0.85rem;
-    color: #BEC2CA;
-    margin-bottom: 0.4rem;
-}
-.profile-label {
-    font-weight: 500;
-    color: #8E929A;
-}
-
-/* Custom Status Badges */
-.badge {
-    display: inline-block;
-    padding: 0.25rem 0.6rem;
-    font-size: 0.75rem;
-    font-weight: 600;
-    border-radius: 6px;
-    text-transform: uppercase;
-}
-.badge-urgent {
-    background-color: rgba(255, 75, 75, 0.15);
-    color: #FF4B4B;
-    border: 1px solid #FF4B4B;
-}
-.badge-warning {
-    background-color: rgba(255, 170, 0, 0.15);
-    color: #FFAA00;
-    border: 1px solid #FFAA00;
-}
-.badge-nominal {
-    background-color: rgba(0, 255, 204, 0.15);
-    color: #00FFCC;
-    border: 1px solid #00FFCC;
-}
-
-/* Beacon Terminal Feed */
-.beacon-terminal {
-    background-color: #0A0D14;
-    border: 1px solid #1E222A;
-    border-radius: 8px;
-    padding: 1rem;
+.wireframe-label {
+    position: absolute;
+    top: -8px;
+    left: 8px;
     font-family: 'Fira Code', monospace;
-    font-size: 0.8rem;
-    height: 250px;
-    overflow-y: auto;
-    color: #00FFCC;
-    box-shadow: inset 0 2px 8px rgba(0,0,0,0.8);
-}
-.terminal-log {
-    margin-bottom: 0.4rem;
-    line-height: 1.3;
-}
-
-/* Chat Assist Styling */
-.chat-container {
-    background-color: #1E222A;
-    border-radius: 12px;
-    padding: 1.5rem;
-    border: 1px solid #2D333F;
-}
-.assistant-reply {
-    background-color: #131720;
-    border-left: 4px solid #00FFCC;
-    padding: 1rem;
-    border-radius: 0 8px 8px 0;
-    margin-top: 1rem;
-}
-.suggested-query-btn {
-    text-align: left !important;
-}
-
-/* Custom CSS Scrollbar */
-::-webkit-scrollbar {
-    width: 6px;
-}
-::-webkit-scrollbar-track {
-    background: #0E1117;
-}
-::-webkit-scrollbar-thumb {
-    background: #1E222A;
+    font-size: 8px;
+    color: var(--slate-color);
+    background-color: #0E0E10;
+    padding: 0 4px;
+    border: 1px solid var(--slate-color);
     border-radius: 3px;
+    line-height: 1;
+    text-transform: uppercase;
 }
-::-webkit-scrollbar-thumb:hover {
-    background: #0B58CA;
+.wireframe-element:hover .wireframe-label {
+    color: var(--accent-color);
+    border-color: var(--accent-color);
+}
+
+/* SVG Dimension indicator style */
+.dim-indicator {
+    stroke: var(--slate-color);
+    stroke-width: 1;
+    stroke-dasharray: 2 2;
+}
+.dim-text {
+    fill: var(--slate-color);
+    font-family: 'Fira Code', monospace;
+    font-size: 9px;
+}
+
+/* Swatch container */
+.color-swatch {
+    display: inline-block;
+    width: 42px;
+    height: 42px;
+    border-radius: 6px;
+    margin-right: 8px;
+    border: 1px solid #2D2D35;
+    vertical-align: middle;
+}
+
+/* Interactive SVG Icon lists */
+.icon-list-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+    margin-top: 10px;
+}
+.icon-card {
+    background-color: #151518;
+    border: 1px solid #2A2A32;
+    border-radius: 6px;
+    padding: 10px;
+    text-align: center;
+    transition: all 0.2s ease;
+}
+.icon-card:hover {
+    border-color: #7C3AED;
+    background-color: #1A1624;
+}
+.icon-svg-container {
+    color: #7C3AED;
+    margin-bottom: 6px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+.icon-name {
+    font-family: 'Fira Code', monospace;
+    font-size: 10px;
+    color: #9CA3AF;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 </style>
 """
-st.markdown(CUSTOM_CSS, unsafe_allow_html=True)
+
+st.markdown(THEME_CSS, unsafe_allow_html=True)
 
 # ==============================================================================
-# 2. LOGISTICAL REFERENCE SYSTEM (VIO AI KNOWLEDGE BASE)
+# 2. STATE MANAGEMENT & SESSION SYSTEM
 # ==============================================================================
-VIO_KNOWLEDGE = {
-    "spanish vip wheelchair access path": {
-        "title": "♿ Spanish VIP Wheelchair Route (Gate C ➡️ Royal Box)",
-        "steps": [
-            "Verify that Gate C ramp access is completely clear of media gear.",
-            "Greet VIP party at Gate C Lobby (Volunteer Maria Delgado is fluent in Spanish).",
-            "Guide through VIP Security Lane 3 (wider clearance for wheelchair passage).",
-            "Proceed directly to VIP Elevator West. Secure access to Level 2.",
-            "Exit elevator, turn left into VIP Secured Corridor (do not enter the public concourse).",
-            "Proceed up the East VIP Corridor Ramp directly into the Royal Box."
-        ],
-        "tags": ["Spain", "Wheelchair", "Gate C", "Royal Box"]
-    },
-    "fastest route from gate b to executive box 4": {
-        "title": "⚡ Fastest Route: Gate B ➡️ Executive Box 4",
-        "steps": [
-            "Receive guests at Gate B Ground Reception.",
-            "Fast-track through VIP Security Lane 2.",
-            "Take VIP Escalator 'Bravo' (east side of lobby) straight to Level 3.",
-            "Turn right at Level 3 corridor, walk past the VIP Lounge 1 entry.",
-            "Continue down the executive suite corridor for 50 meters.",
-            "Executive Box 4 is located on the left side (Suite steward holds access credentials)."
-        ],
-        "tags": ["Gate B", "Suite 4", "Level 3", "Route"]
-    },
-    "german vip drop-off": {
-        "title": "🚗 German FA VIP Drop-off & Lounge 1 Path",
-        "steps": [
-            "Instruct driver to enter VIP Access Lane North-West (Gate Code: NW-DE-2026).",
-            "Drop off VIP guests at Gate B Lounge Entry. (Samantha Green is designated host).",
-            "Check accreditation badges at VIP Reception Desk 1.",
-            "Board VIP Elevator 2 (North Lobby) to Level 1.",
-            "Turn left, proceed down VIP hallway past the Historical Trophy gallery.",
-            "Lounge 1 is located directly at the end of the secure hallway."
-        ],
-        "tags": ["German", "Gate B", "Lounge 1", "Drop-off"]
-    },
-    "japanese vip translation": {
-        "title": "🇯🇵 Tokyo FC / Japanese VIP Protocol",
-        "steps": [
-            "Meet Tokyo FC delegation at Gate A Transport Hub (Primary Lead: Mr. Tanaka).",
-            "Ensure volunteer Kenji Sato is positioned at Gate A (Bilingual liaison).",
-            "Fast-track delegation through VIP Customs Clearance Box 4.",
-            "Guide delegation to Executive Suite 4 via Level 3 North Corridor.",
-            "Confirm Japanese translated stadium brochures and tablet maps are loaded in Suite 4."
-        ],
-        "tags": ["Tokyo FC", "Japanese", "Gate A", "Suite 4", "Translation"]
-    },
-    "emergency medical route": {
-        "title": "🚨 Emergency Evacuation: VIP Area ➡️ Ambulance Bay",
-        "steps": [
-            "Contact Central Command (Sarah Connor) & Medical Dispatch immediately on Radio Channel 1.",
-            "Clear VIP Service Elevator 3 using the Emergency Lock Key.",
-            "Evacuate patient from Level 2/3 via secure Rear corridor 1B.",
-            "Exit building structure at Ground Floor Gate 4 (Ambulance standby zone).",
-            "Verify Security details keep path clear of VIP spectators and press."
-        ],
-        "tags": ["Emergency", "Medical", "Ambulance", "Gate 4"]
-    },
-    "arabic vip protocol": {
-        "title": "🕌 Arabic VIP & Halal Dining Protocol",
-        "steps": [
-            "Verify with Catering Lead that VIP Lounge 1 Halal-certified menu is active.",
-            "Ensure no alcoholic beverages are placed on the main table unless explicitly requested.",
-            "Quiet room / Prayer Room is open on Level 2, Room 204 (labeled 'Quiet Room').",
-            "Greet guests with traditional formal Arabic respect (hand on heart, head bow).",
-            "If any special protocol questions arise, contact Team Lead Ahmed Al-Masri."
-        ],
-        "tags": ["Arabic", "Halal", "Lounge 1", "Prayer"]
-    }
-}
+if 'creative_field' not in st.session_state:
+    st.session_state.creative_field = "UX/UI Design"
 
-# ==============================================================================
-# 3. MATCHDAY SIMULATION STATE VARIABLES
-# ==============================================================================
-VIP_SIMULATION_STEPS = {
-    0: [
-        {"name": "Spain Royal Escort", "affiliation": "Spanish Royal Family", "status": "Urgent Alert", "location_desc": "Approaching Gate C (Vehicle Delay)", "transit_mode": "Private Escort", "eta": "17:45", "language": "Spanish", "target": "Royal Box", "gate": "Gate C", "mandates": "Wheelchair access, high security", "x": 8.0, "y": 2.5, "zone": "Outside"},
-        {"name": "German FA President", "affiliation": "DFB Delegation", "status": "Nominal", "location_desc": "En Route (On Highway 1)", "transit_mode": "VIP Shuttle", "eta": "18:30", "language": "German", "target": "VIP Lounge 1", "gate": "Gate B", "mandates": "Halal catering request", "x": 5.0, "y": 1.2, "zone": "Outside"},
-        {"name": "Tokyo FC Board", "affiliation": "Tokyo FC Board", "status": "Warning", "location_desc": "At Customs Hub (Language barrier)", "transit_mode": "Charter Bus", "eta": "18:15", "language": "Japanese", "target": "Executive Suite 4", "gate": "Gate A", "mandates": "Needs Japanese translator", "x": 1.8, "y": 3.0, "zone": "Outside"},
-        {"name": "FIFA Executive VIPs", "affiliation": "FIFA Comm.", "status": "Nominal", "location_desc": "Arrived at VIP Lounge 2", "transit_mode": "Official Car", "eta": "16:45", "language": "French", "target": "VIP Lounge 2", "gate": "Gate B", "mandates": "Standard accreditations", "x": 7.0, "y": 7.0, "zone": "Inside"},
-        {"name": "Ronaldo & Party", "affiliation": "Brazilian Legend", "status": "Nominal", "location_desc": "Arrived at Royal Box", "transit_mode": "Helicopter", "eta": "16:15", "language": "Portuguese", "target": "Royal Box", "gate": "Helipad", "mandates": "Autograph area protection", "x": 5.0, "y": 8.0, "zone": "Inside"}
-    ],
-    1: [
-        {"name": "Spain Royal Escort", "affiliation": "Spanish Royal Family", "status": "Urgent Alert", "location_desc": "At Gate C (Lobby Arrival)", "transit_mode": "Private Escort", "eta": "17:45", "language": "Spanish", "target": "Royal Box", "gate": "Gate C", "mandates": "Wheelchair access, high security", "x": 8.0, "y": 7.5, "zone": "Outside"},
-        {"name": "German FA President", "affiliation": "DFB Delegation", "status": "Nominal", "location_desc": "Approaching Gate B Drop-off", "transit_mode": "VIP Shuttle", "eta": "18:25", "language": "German", "target": "VIP Lounge 1", "gate": "Gate B", "mandates": "Halal catering request", "x": 5.0, "y": 4.5, "zone": "Outside"},
-        {"name": "Tokyo FC Board", "affiliation": "Tokyo FC Board", "status": "Warning", "location_desc": "Approaching Gate A Hub", "transit_mode": "Charter Bus", "eta": "18:15", "language": "Japanese", "target": "Executive Suite 4", "gate": "Gate A", "mandates": "Needs Japanese translator", "x": 2.0, "y": 6.0, "zone": "Outside"},
-        {"name": "FIFA Executive VIPs", "affiliation": "FIFA Comm.", "status": "Nominal", "location_desc": "Settled at VIP Lounge 2", "transit_mode": "Official Car", "eta": "16:45", "language": "French", "target": "VIP Lounge 2", "gate": "Gate B", "mandates": "Standard accreditations", "x": 7.0, "y": 7.0, "zone": "Inside"},
-        {"name": "Ronaldo & Party", "affiliation": "Brazilian Legend", "status": "Nominal", "location_desc": "Settled at Royal Box", "transit_mode": "Helicopter", "eta": "16:15", "language": "Portuguese", "target": "Royal Box", "gate": "Helipad", "mandates": "Autograph area protection", "x": 5.0, "y": 8.0, "zone": "Inside"}
-    ],
-    2: [
-        {"name": "Spain Royal Escort", "affiliation": "Spanish Royal Family", "status": "Nominal", "location_desc": "Escorted to Royal Box", "transit_mode": "Private Escort", "eta": "17:45", "language": "Spanish", "target": "Royal Box", "gate": "Gate C", "mandates": "Wheelchair access, high security", "x": 5.0, "y": 8.0, "zone": "Inside"},
-        {"name": "German FA President", "affiliation": "DFB Delegation", "status": "Nominal", "location_desc": "At Gate B (Receiving VIP)", "transit_mode": "VIP Shuttle", "eta": "18:25", "language": "German", "target": "VIP Lounge 1", "gate": "Gate B", "mandates": "Halal catering request", "x": 5.0, "y": 7.5, "zone": "Outside"},
-        {"name": "Tokyo FC Board", "affiliation": "Tokyo FC Board", "status": "Nominal", "location_desc": "At Gate A (Met by Translator)", "transit_mode": "Charter Bus", "eta": "18:15", "language": "Japanese", "target": "Executive Suite 4", "gate": "Gate A", "mandates": "Needs Japanese translator", "x": 2.0, "y": 7.5, "zone": "Outside"},
-        {"name": "FIFA Executive VIPs", "affiliation": "FIFA Comm.", "status": "Nominal", "location_desc": "Settled at VIP Lounge 2", "transit_mode": "Official Car", "eta": "16:45", "language": "French", "target": "VIP Lounge 2", "gate": "Gate B", "mandates": "Standard accreditations", "x": 7.0, "y": 7.0, "zone": "Inside"},
-        {"name": "Ronaldo & Party", "affiliation": "Brazilian Legend", "status": "Nominal", "location_desc": "Settled at Royal Box", "transit_mode": "Helicopter", "eta": "16:15", "language": "Portuguese", "target": "Royal Box", "gate": "Helipad", "mandates": "Autograph area protection", "x": 5.0, "y": 8.0, "zone": "Inside"}
-    ],
-    3: [
-        {"name": "Spain Royal Escort", "affiliation": "Spanish Royal Family", "status": "Nominal", "location_desc": "Settled at Royal Box", "transit_mode": "Private Escort", "eta": "17:45", "language": "Spanish", "target": "Royal Box", "gate": "Gate C", "mandates": "Wheelchair access, high security", "x": 5.0, "y": 8.0, "zone": "Inside"},
-        {"name": "German FA President", "affiliation": "DFB Delegation", "status": "Nominal", "location_desc": "Arrived at VIP Lounge 1", "transit_mode": "VIP Shuttle", "eta": "18:25", "language": "German", "target": "VIP Lounge 1", "gate": "Gate B", "mandates": "Halal catering request", "x": 3.0, "y": 7.0, "zone": "Inside"},
-        {"name": "Tokyo FC Board", "affiliation": "Tokyo FC Board", "status": "Nominal", "location_desc": "Arrived at Executive Suite 4", "transit_mode": "Charter Bus", "eta": "18:15", "language": "Japanese", "target": "Executive Suite 4", "gate": "Gate A", "mandates": "Needs Japanese translator", "x": 3.2, "y": 4.0, "zone": "Inside"},
-        {"name": "FIFA Executive VIPs", "affiliation": "FIFA Comm.", "status": "Nominal", "location_desc": "Settled at VIP Lounge 2", "transit_mode": "Official Car", "eta": "16:45", "language": "French", "target": "VIP Lounge 2", "gate": "Gate B", "mandates": "Standard accreditations", "x": 7.0, "y": 7.0, "zone": "Inside"},
-        {"name": "Ronaldo & Party", "affiliation": "Brazilian Legend", "status": "Nominal", "location_desc": "Settled at Royal Box", "transit_mode": "Helicopter", "eta": "16:15", "language": "Portuguese", "target": "Royal Box", "gate": "Helipad", "mandates": "Autograph area protection", "x": 5.0, "y": 8.0, "zone": "Inside"}
-    ]
-}
+if 'project_type' not in st.session_state:
+    st.session_state.project_type = "Case Study"
 
-SIMULATION_TIME_MAPPING = {
-    0: "17:00 (Pre-Match Arrival Hub)",
-    1: "17:30 (Gates Opening Phase)",
-    2: "18:00 (Peak Ingress Peak Flow)",
-    3: "18:30 (Kick-off Impending)"
-}
+if 'grid_system' not in st.session_state:
+    st.session_state.grid_system = "12-Column Grid"
 
-# ==============================================================================
-# 4. INITIALIZE SESSION STATE
-# ==============================================================================
-if "initialized" not in st.session_state:
-    st.session_state.simulation_step = 0
-    st.session_state.vips = VIP_SIMULATION_STEPS[0]
-    st.session_state.directory = [
-        {"name": "Sarah Connor", "role": "Central Command Director", "zone": "Command Center", "languages": "English, French", "status": "Active", "beep_count": 0, "id": "sarah"},
-        {"name": "Ahmed Al-Masri", "role": "Team Lead", "zone": "VIP Lounges", "languages": "English, Arabic", "status": "Active", "beep_count": 0, "id": "ahmed"},
-        {"name": "Maria Delgado", "role": "Liaison Officer", "zone": "Gate C VIP Reception", "languages": "Spanish, English", "status": "Active", "beep_count": 0, "id": "maria"},
-        {"name": "Kenji Sato", "role": "Bilingual Escort", "zone": "Gate A Logistics", "languages": "Japanese, English", "status": "Active", "beep_count": 0, "id": "kenji"},
-        {"name": "Jean-Pierre", "role": "Transit Coordinator", "zone": "Outside Transport Hub", "languages": "French, English", "status": "Active", "beep_count": 0, "id": "jean"},
-        {"name": "Samantha Green", "role": "Royal Box Host", "zone": "Royal Box Corridor", "languages": "English, German", "status": "Active", "beep_count": 0, "id": "samantha"}
-    ]
-    st.session_state.beep_logs = [
-        f"[{datetime.datetime.now().strftime('%H:%M:%S')}] SYSTEM INIT // Secure channels active. VIO co-pilot online."
-    ]
-    st.session_state.chat_history = []
-    st.session_state.selected_contingency = None
-    st.session_state.initialized = True
+if 'tone' not in st.session_state:
+    st.session_state.tone = "Avant-Garde"
 
-# ==============================================================================
-# 5. SIMULATION LOGIC HANDLERS
-# ==============================================================================
-def update_simulation_step():
-    step = st.session_state.simulation_step
-    st.session_state.vips = VIP_SIMULATION_STEPS[step]
-    log_time = datetime.datetime.now().strftime('%H:%M:%S')
-    st.session_state.beep_logs.append(
-        f"[{log_time}] SIM UPDATE // Shifted to Step {step} [{SIMULATION_TIME_MAPPING[step]}]. VIP Positions refreshed."
-    )
+if 'grid_gap' not in st.session_state:
+    st.session_state.grid_gap = 16
 
-def advance_step():
-    if st.session_state.simulation_step < 3:
-        st.session_state.simulation_step += 1
-        update_simulation_step()
+if 'border_radius' not in st.session_state:
+    st.session_state.border_radius = 8
+
+if 'border_thickness' not in st.session_state:
+    st.session_state.border_thickness = 1
+
+if 'accent_opacity' not in st.session_state:
+    st.session_state.accent_opacity = 70
+
+# Dynamic callbacks or helper resets when Creative Field shifts
+def on_field_change():
+    field = st.session_state.selected_field
+    st.session_state.creative_field = field
+    if field == "UX/UI Design":
+        st.session_state.project_type = "Case Study"
+        st.session_state.grid_system = "12-Column Grid"
+    elif field == "Industrial Design":
+        st.session_state.project_type = "Physical Prototype"
+        st.session_state.grid_system = "Modular Grid"
     else:
-        st.toast("Simulation is at the final matchday phase.", icon="ℹ️")
-
-def reset_sim():
-    st.session_state.simulation_step = 0
-    update_simulation_step()
-    st.toast("Simulation reset to step 0.", icon="🔄")
-
-def trigger_beep(person_id, name, zone):
-    # Find person and increment beep
-    for person in st.session_state.directory:
-        if person["id"] == person_id:
-            person["beep_count"] += 1
-            break
-    log_time = datetime.datetime.now().strftime('%H:%M:%S')
-    st.session_state.beep_logs.append(
-        f"[{log_time}] BEACON BEEP // Paged {name} in zone [{zone}] successfully."
-    )
-    st.toast(f"🚨 Silent beep transmitted to {name}!", icon="📢")
+        st.session_state.project_type = "Brand Identity"
+        st.session_state.grid_system = "4-Column Mobile Grid"
 
 # ==============================================================================
-# 6. HEADER & METRIC STYLING
+# 3. INTERACTIVE SIDEBAR & PARAMETERS
 # ==============================================================================
-# Header Layout
-col_logo, col_title = st.columns([1, 12])
-with col_logo:
-    st.write("")
-    st.markdown("<h1 style='text-align: center; margin-top: 15px;'>🏟️</h1>", unsafe_allow_html=True)
-with col_title:
-    st.markdown(
-        "<h1 style='margin-bottom: 0px;'>SMART STADIUM COMMAND</h1>"
-        "<p style='color: #8E929A; margin-top: 0px; font-size: 1.1rem;'>Frontline Volunteer Decision Support System // VIO AI Co-Pilot Active</p>",
-        unsafe_allow_html=True
-    )
+st.sidebar.markdown("<h2 style='margin-bottom:0px;'>DesignForge</h2>", unsafe_allow_html=True)
+st.sidebar.markdown("<p style='font-size:0.75rem; color:#9CA3AF; margin-top:0px;'>LAYOUT BLUEPRINT ENGINE // V1.0</p>", unsafe_allow_html=True)
+st.sidebar.write("---")
 
-st.write("---")
-
-# Metrics calculations
-total_vips = len(st.session_state.vips)
-urgent_vips = len([v for v in st.session_state.vips if v["status"] == "Urgent Alert"])
-total_paged = sum([p["beep_count"] for p in st.session_state.directory])
-clock_time = SIMULATION_TIME_MAPPING[st.session_state.simulation_step]
-
-# Metric cards using HTML/CSS
-st.markdown(f"""
-<div class="metric-container">
-    <div class="metric-card">
-        <div class="metric-title">Stadium Timeline Clock</div>
-        <div class="metric-val">{clock_time}</div>
-        <div class="metric-desc">Interactive Step {st.session_state.simulation_step} / 3</div>
-    </div>
-    <div class="metric-card">
-        <div class="metric-title">Active VIP Delegations</div>
-        <div class="metric-val">{total_vips}</div>
-        <div class="metric-desc">Monitored in Session</div>
-    </div>
-    <div class="metric-card">
-        <div class="metric-title">Urgent Active Alerts</div>
-        <div class="metric-val" style="color: {'#FF4B4B' if urgent_vips > 0 else '#FFFFFF'}">{urgent_vips}</div>
-        <div class="metric-desc {'urgent' if urgent_vips > 0 else ''}">Immediate Action Required</div>
-    </div>
-    <div class="metric-card">
-        <div class="metric-title">Active Beacon Beeps</div>
-        <div class="metric-val">{total_paged}</div>
-        <div class="metric-desc">Volunteers Signalled</div>
-    </div>
-</div>
-""", unsafe_allow_html=True)
-
-# ==============================================================================
-# 7. MAIN SIDEBAR NAVIGATION & SIMULATOR CONTROL PANEL
-# ==============================================================================
-st.sidebar.markdown(
-    "<h2 style='color: #FFFFFF; font-size: 1.3rem; margin-top: 0px;'>🧭 COMMAND NAVIGATION</h2>", 
-    unsafe_allow_html=True
+# 1. Creative Discipline Selector
+creative_fields = ["UX/UI Design", "Industrial Design", "Graphic Design"]
+selected_field = st.sidebar.selectbox(
+    "Creative Discipline",
+    creative_fields,
+    index=creative_fields.index(st.session_state.creative_field),
+    key="selected_field",
+    on_change=on_field_change
 )
 
-tab_selection = st.sidebar.radio(
-    "Select Interface Page:",
-    [
-        "🗺️ Zone Map Command",
-        "⚠️ VIP Transit Matrix",
-        "📇 Operational Directory",
-        "🤖 VIO AI Co-Pilot"
-    ],
-    label_visibility="collapsed"
+# Set dynamic project types list based on selected field
+if selected_field == "UX/UI Design":
+    project_options = ["Case Study", "Web Application Dashboard", "SaaS Landing Page"]
+elif selected_field == "Industrial Design":
+    project_options = ["Physical Prototype", "Exploded Tech Assembly", "Ergonomic Schematic"]
+else:
+    project_options = ["Brand Identity", "Editorial Book Spread", "Asymmetric Exhibition Grid"]
+
+# Ensure selected project type is in the list
+current_proj = st.session_state.project_type
+if current_proj not in project_options:
+    st.session_state.project_type = project_options[0]
+
+project_type = st.sidebar.selectbox(
+    "Project Architecture",
+    project_options,
+    key="project_type"
+)
+
+# 2. Tone Selector
+tone_options = ["Avant-Garde", "Corporate", "Editorial"]
+tone = st.sidebar.selectbox(
+    "Typography Tone",
+    tone_options,
+    index=tone_options.index(st.session_state.tone),
+    key="tone"
+)
+
+# 3. Target Grid System
+grid_options = ["12-Column Grid", "4-Column Mobile Grid", "Modular Grid"]
+grid_system = st.sidebar.selectbox(
+    "Target Grid Structure",
+    grid_options,
+    index=grid_options.index(st.session_state.grid_system),
+    key="grid_system"
 )
 
 st.sidebar.write("---")
+st.sidebar.markdown("### Layout Fine-Tuning")
 
-st.sidebar.markdown(
-    "<h3 style='color: #FFFFFF; font-size: 1.1rem;'>⏱️ MATCHDAY TIMELINE SIMULATOR</h3>",
-    unsafe_allow_html=True
-)
-st.sidebar.info(
-    "Control the timeline to simulate real-time ingress. VIPs will transition "
-    "from incoming transit (Outside Gates) to their designated lounges/suites (Inside Stadium)."
-)
+# 4. Spacing sliders
+grid_gap = st.sidebar.slider("Grid Gutter Spacing (px)", min_value=4, max_value=32, value=st.session_state.grid_gap, step=2, key="grid_gap")
+border_radius = st.sidebar.slider("Wireframe Corner Radius (px)", min_value=0, max_value=24, value=st.session_state.border_radius, step=2, key="border_radius")
+border_thickness = st.sidebar.slider("Boundary Thickness (px)", min_value=1, max_value=4, value=st.session_state.border_thickness, step=1, key="border_thickness")
+accent_opacity = st.sidebar.slider("Accent Glow Opacity (%)", min_value=10, max_value=100, value=st.session_state.accent_opacity, step=5, key="accent_opacity")
 
-# Simulation Buttons
-sim_cols = st.sidebar.columns(2)
-with sim_cols[0]:
-    if st.button("▶️ Advance", use_container_width=True, on_click=advance_step):
-        pass
-with sim_cols[1]:
-    if st.button("🔄 Reset", use_container_width=True, on_click=reset_sim):
-        pass
-
-# Add a warning in the sidebar if there's an active urgent alert
-urgent_list = [v for v in st.session_state.vips if v["status"] == "Urgent Alert"]
-if urgent_list:
-    st.sidebar.markdown("---")
-    st.sidebar.markdown(
-        "<div style='border: 1px solid #FF4B4B; background-color: rgba(255, 75, 75, 0.1); "
-        "padding: 10px; border-radius: 6px; color: #FF4B4B; font-weight: 500; font-size: 0.85rem;'>"
-        f"🚨 <b>URGENT ALERT:</b> {urgent_list[0]['name']} is facing a transport issue. "
-        "Review VIP Transit tab immediately."
-        "</div>",
-        unsafe_allow_html=True
-    )
+# CSS root variables injection based on sliders
+st.markdown(f"""
+<style>
+:root {{
+    --grid-gap: {grid_gap}px;
+    --border-radius: {border_radius}px;
+    --border-thickness: {border_thickness}px;
+    --accent-color: #7C3AED;
+    --accent-opacity: {accent_opacity / 100.0};
+    --slate-color: #9CA3AF;
+}}
+</style>
+""", unsafe_allow_html=True)
 
 # ==============================================================================
-# 8. TWO-COLUMN OPERATIONAL LAYOUT (PRIMARY SCREEN + TERMINAL)
+# 4. MAIN PANEL LAYOUT & SIMULATION ENGINE
 # ==============================================================================
-col_main, col_logs = st.columns([3, 1])
+# Header Area
+st.markdown(f"""
+<div class="engine-header">
+    <div class="engine-title">DesignForge Layout Blueprint Engine</div>
+    <div class="engine-subtitle">Multidisciplinary Design System Generator • Active Mode: <span style="color:#7C3AED; font-weight:600;">{selected_field}</span></div>
+</div>
+""", unsafe_allow_html=True)
 
-with col_main:
-    # --------------------------------------------------------------------------
-    # TAB 1: 🗺️ DUAL-ZONE INTERACTIVE STADIUM MAP
-    # --------------------------------------------------------------------------
-    if tab_selection == "🗺️ Zone Map Command":
-        st.subheader("🗺️ Dual-Zone Interactive Layout Map")
-        st.markdown(
-            "This dynamic view maps out the movement coordinates of incoming VIP parties. "
-            "Toggle between the **Outside Gate Ingress** and the **Inside Suite Layout**."
-        )
-        
-        map_toggle = st.segmented_control(
-            "Select Map Zone:",
-            options=["Outside Gates & Transport Hub", "Inside Stadium Layout"],
-            default="Outside Gates & Transport Hub"
-        )
+# Define design token recommendations dynamically based on selection
+typography_pairings = {
+    "Avant-Garde": {
+        "display_name": "Syne",
+        "display_url": "https://fonts.googleapis.com/css2?family=Syne:wght@700;800&display=swap",
+        "display_css": "'Syne', sans-serif",
+        "body_name": "Space Grotesk",
+        "body_url": "https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600&display=swap",
+        "body_css": "'Space Grotesk', sans-serif",
+        "archetype": "Bold, geometric, tech-experimental structure with tight display letter-spacing.",
+        "scale": "Display: 38px (h1) / Body: 15px (p) / Leading: 1.1 (Display) & 1.4 (Body)"
+    },
+    "Corporate": {
+        "display_name": "Plus Jakarta Sans",
+        "display_url": "https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@600;700&display=swap",
+        "display_css": "'Plus Jakarta Sans', sans-serif",
+        "body_name": "Inter",
+        "body_url": "https://fonts.googleapis.com/css2?family=Inter:wght@400;500&display=swap",
+        "body_css": "'Inter', sans-serif",
+        "archetype": "Ultra-clean Scandinavian sans-serif pairing optimized for readability and high UI pixel densities.",
+        "scale": "Display: 28px (h1) / Body: 14px (p) / Leading: 1.25 (Display) & 1.6 (Body)"
+    },
+    "Editorial": {
+        "display_name": "Playfair Display",
+        "display_url": "https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,600;0,700;1,400&display=swap",
+        "display_css": "'Playfair Display', serif",
+        "body_name": "Lora",
+        "body_url": "https://fonts.googleapis.com/css2?family=Lora:ital,wght@0,400;0,500;1,400&display=swap",
+        "body_css": "'Lora', serif",
+        "archetype": "High-contrast classy serif pairing drawing reference from Swiss typography layout magazines and art grids.",
+        "scale": "Display: 34px (h1) / Body: 16px (p) / Leading: 1.15 (Display) & 1.7 (Body)"
+    }
+}
 
-        # Plotly graph creation
-        fig = go.Figure()
+active_typography = typography_pairings[tone]
 
-        if map_toggle == "Outside Gates & Transport Hub":
-            # --- OUTSIDE GATE INGRESS HUB LAYOUT DESIGN ---
-            # Gates (Rectangles)
-            fig.add_shape(type="rect", x0=1.5, y0=7.2, x1=2.5, y1=7.8, fillcolor="#1E222A", line=dict(color="#0B58CA", width=2))
-            fig.add_shape(type="rect", x0=4.5, y0=7.2, x1=5.5, y1=7.8, fillcolor="#1E222A", line=dict(color="#0B58CA", width=2))
-            fig.add_shape(type="rect", x0=7.5, y0=7.2, x1=8.5, y1=7.8, fillcolor="#1E222A", line=dict(color="#0B58CA", width=2))
+# Color palette token mappings based on Field
+color_schemes = {
+    "UX/UI Design": {
+        "bg": "#121214",
+        "surface": "#1A1A1E",
+        "accent": "#7C3AED",
+        "accent_text": "Electric Purple",
+        "neutral_dark": "#1F1F24",
+        "neutral_light": "#F3F4F6",
+        "accent_secondary": "#06B6D4",
+        "accent_secondary_text": "Cyber Cyan",
+        "palette_description": "Clean dark UI foundation with purple primary focus for highlights and cyan for interactive hover states."
+    },
+    "Industrial Design": {
+        "bg": "#0D0E10",
+        "surface": "#141517",
+        "accent": "#7C3AED",
+        "accent_text": "Electric Purple",
+        "neutral_dark": "#1B1C1E",
+        "neutral_light": "#E5E7EB",
+        "accent_secondary": "#F97316",
+        "accent_secondary_text": "Warning Amber",
+        "palette_description": "Engineering blueprint aesthetic. Purple for primary bounding coordinates and Warning Amber for hardware controls."
+    },
+    "Graphic Design": {
+        "bg": "#111111",
+        "surface": "#181818",
+        "accent": "#7C3AED",
+        "accent_text": "Electric Purple",
+        "neutral_dark": "#202020",
+        "neutral_light": "#FFFFFF",
+        "accent_secondary": "#EC4899",
+        "accent_secondary_text": "Chroma Pink",
+        "palette_description": "Editorial offset. High-contrast white and dark slate spaces using purple and magenta highlights for asymmetrical layouts."
+    }
+}
 
-            # Transport Hubs (Rectangle & Circle)
-            fig.add_shape(type="rect", x0=1.0, y0=2.0, x1=2.2, y1=2.8, fillcolor="#161A22", line=dict(color="#8E929A", width=1))
-            fig.add_shape(type="circle", x0=7.6, y0=1.4, x1=8.4, y1=2.2, fillcolor="#161A22", line=dict(color="#FF4B4B", width=2))
+active_colors = color_schemes[selected_field]
 
-            # VIP Drop-Off Center (Circle)
-            fig.add_shape(type="circle", x0=4.6, y0=4.6, x1=5.4, y1=5.4, fillcolor="#1A202C", line=dict(color="#00FFCC", width=1.5))
+# Split main workspace: Left Column = Wireframe Simulation, Right Column = System Tokens Panel
+col_sim, col_tokens = st.columns([1.6, 1.0])
 
-            # Roads/Path Connectors (Lines)
-            fig.add_trace(go.Scatter(
-                x=[1.6, 1.6, 5.0, 8.0, 8.0],
-                y=[2.8, 5.0, 5.0, 5.0, 2.2],
-                mode="lines",
-                line=dict(color="#2D333F", width=5, dash="dash"),
-                hoverinfo="skip",
-                showlegend=False
-            ))
-            fig.add_trace(go.Scatter(
-                x=[2.0, 2.0], y=[5.0, 7.2], mode="lines", line=dict(color="#2D333F", width=5, dash="dash"), hoverinfo="skip", showlegend=False
-            ))
-            fig.add_trace(go.Scatter(
-                x=[5.0, 5.0], y=[5.0, 7.2], mode="lines", line=dict(color="#2D333F", width=5, dash="dash"), hoverinfo="skip", showlegend=False
-            ))
-            fig.add_trace(go.Scatter(
-                x=[8.0, 8.0], y=[5.0, 7.2], mode="lines", line=dict(color="#2D333F", width=5, dash="dash"), hoverinfo="skip", showlegend=False
-            ))
-
-            # Labels & Text Annotations
-            fig.add_annotation(x=2.0, y=7.5, text="Gate A Ingress", showarrow=False, font=dict(color="#FFFFFF", size=11, family="Outfit"))
-            fig.add_annotation(x=5.0, y=7.5, text="Gate B Ingress", showarrow=False, font=dict(color="#FFFFFF", size=11, family="Outfit"))
-            fig.add_annotation(x=8.0, y=7.5, text="Gate C Ingress", showarrow=False, font=dict(color="#FFFFFF", size=11, family="Outfit"))
-            fig.add_annotation(x=1.6, y=2.4, text="Transport Hub", showarrow=False, font=dict(color="#BEC2CA", size=9, family="Outfit"))
-            fig.add_annotation(x=8.0, y=1.8, text="VIP Helipad (H)", showarrow=False, font=dict(color="#FF4B4B", size=9, family="Outfit"))
-            fig.add_annotation(x=5.0, y=5.0, text="VIP Drop-Off Area", showarrow=False, font=dict(color="#00FFCC", size=10, family="Outfit"))
-            
-            # Filter active VIPs outside
-            vips_outside = [v for v in st.session_state.vips if v["zone"] == "Outside"]
-            
-            # VIP Markers
-            if vips_outside:
-                colors = []
-                for v in vips_outside:
-                    if v["status"] == "Urgent Alert": colors.append("#FF4B4B")
-                    elif v["status"] == "Warning": colors.append("#FFAA00")
-                    else: colors.append("#00FFCC")
-
-                fig.add_trace(go.Scatter(
-                    x=[v["x"] for v in vips_outside],
-                    y=[v["y"] for v in vips_outside],
-                    mode="markers+text",
-                    marker=dict(
-                        size=20,
-                        color=colors,
-                        line=dict(color="#FFFFFF", width=2),
-                        symbol="circle"
-                    ),
-                    text=[v["name"] for v in vips_outside],
-                    textposition="top center",
-                    textfont=dict(color="#FFFFFF", size=12, family="Outfit"),
-                    hovertemplate="<b>%{text}</b><br>Affiliation: %{customdata[0]}<br>Status: %{customdata[1]}<br>Location: %{customdata[2]}<br>Language: %{customdata[3]}<extra></extra>",
-                    customdata=[[v["affiliation"], v["status"], v["location_desc"], v["language"]] for v in vips_outside],
-                    showlegend=False
-                ))
-
-        else:
-            # --- INSIDE STADIUM VIP SUITES & LOUNGES DESIGN ---
-            # Green pitch in center
-            fig.add_shape(type="rect", x0=3.2, y0=3.2, x1=6.8, y1=6.8, fillcolor="#1b4d3e", line=dict(color="#00FFCC", width=1.5))
-            fig.add_shape(type="circle", x0=4.5, y0=4.5, x1=5.5, y1=5.5, line=dict(color="#FFFFFF", width=1))
-            fig.add_shape(type="line", x0=5.0, y0=3.2, x1=5.0, y1=6.8, line=dict(color="#FFFFFF", width=1))
-
-            # Royal Box (Gold Accent)
-            fig.add_shape(type="rect", x0=4.3, y0=7.5, x1=5.7, y1=8.2, fillcolor="#2A2215", line=dict(color="#FFAA00", width=2))
-            
-            # VIP Lounges (Level 1)
-            fig.add_shape(type="rect", x0=1.8, y0=6.8, x1=2.8, y1=7.4, fillcolor="#151A24", line=dict(color="#0B58CA", width=2))
-            fig.add_shape(type="rect", x0=7.2, y0=6.8, x1=8.2, y1=7.4, fillcolor="#151A24", line=dict(color="#0B58CA", width=2))
-
-            # Executive Suites (Level 3 - bottom sides)
-            fig.add_shape(type="rect", x0=1.5, y0=2.0, x1=3.5, y1=2.6, fillcolor="#1E222A", line=dict(color="#8E929A", width=1))
-            fig.add_shape(type="rect", x0=6.5, y0=2.0, x1=8.5, y1=2.6, fillcolor="#1E222A", line=dict(color="#8E929A", width=1))
-
-            # Labels & Text Annotations
-            fig.add_annotation(x=5.0, y=5.0, text="PITCH ZONE", showarrow=False, font=dict(color="#FFFFFF", size=14, family="Space Grotesk", weight="bold"))
-            fig.add_annotation(x=5.0, y=7.8, text="👑 Royal Box VIP", showarrow=False, font=dict(color="#FFAA00", size=11, family="Outfit"))
-            fig.add_annotation(x=2.3, y=7.1, text="VIP Lounge 1", showarrow=False, font=dict(color="#FFFFFF", size=10, family="Outfit"))
-            fig.add_annotation(x=7.7, y=7.1, text="VIP Lounge 2", showarrow=False, font=dict(color="#FFFFFF", size=10, family="Outfit"))
-            fig.add_annotation(x=2.5, y=2.3, text="Executive Suites 1-5", showarrow=False, font=dict(color="#BEC2CA", size=9, family="Outfit"))
-            fig.add_annotation(x=7.5, y=2.3, text="Executive Suites 6-10", showarrow=False, font=dict(color="#BEC2CA", size=9, family="Outfit"))
-
-            # Filter active VIPs inside
-            vips_inside = [v for v in st.session_state.vips if v["zone"] == "Inside"]
-
-            # VIP Markers
-            if vips_inside:
-                colors = []
-                for v in vips_inside:
-                    if v["status"] == "Urgent Alert": colors.append("#FF4B4B")
-                    elif v["status"] == "Warning": colors.append("#FFAA00")
-                    else: colors.append("#00FFCC")
-
-                fig.add_trace(go.Scatter(
-                    x=[v["x"] for v in vips_inside],
-                    y=[v["y"] for v in vips_inside],
-                    mode="markers+text",
-                    marker=dict(
-                        size=20,
-                        color=colors,
-                        line=dict(color="#FFFFFF", width=2),
-                        symbol="circle"
-                    ),
-                    text=[v["name"] for v in vips_inside],
-                    textposition="top center",
-                    textfont=dict(color="#FFFFFF", size=12, family="Outfit"),
-                    hovertemplate="<b>%{text}</b><br>Affiliation: %{customdata[0]}<br>Status: %{customdata[1]}<br>Location: %{customdata[2]}<br>Target Suite: %{customdata[3]}<extra></extra>",
-                    customdata=[[v["affiliation"], v["status"], v["location_desc"], v["target"]] for v in vips_inside],
-                    showlegend=False
-                ))
-
-        # Apply dark mode styles to plot axes & backgrounds
-        fig.update_layout(
-            xaxis=dict(range=[0, 10], showgrid=False, zeroline=False, visible=False),
-            yaxis=dict(range=[0, 10], showgrid=False, zeroline=False, visible=False),
-            plot_bgcolor="#0E1117",
-            paper_bgcolor="#0E1117",
-            margin=dict(l=0, r=0, t=10, b=0),
-            showlegend=False,
-            height=520,
-            dragmode=False
-        )
-
-        st.plotly_chart(fig, use_container_width=True, config={"displayModeBar": False})
-
-        # Mini legend guide
-        legend_cols = st.columns(3)
-        with legend_cols[0]:
-            st.markdown("<span class='badge badge-urgent'>● Urgent Alert</span> — Vehicle blockages/Severe delays", unsafe_allow_html=True)
-        with legend_cols[1]:
-            st.markdown("<span class='badge badge-warning'>● Delayed/Warning</span> — Delayed in customs/Language friction", unsafe_allow_html=True)
-        with legend_cols[2]:
-            st.markdown("<span class='badge badge-nominal'>● Nominal/Active</span> — On schedule / Arrived at target destination", unsafe_allow_html=True)
-
-    # --------------------------------------------------------------------------
-    # TAB 2: ⚠️ VIP FLIGHT/TRANSIT & LANGUAGE SYNCHRONIZATION FEED
-    # --------------------------------------------------------------------------
-    elif tab_selection == "⚠️ VIP Transit Matrix":
-        st.subheader("⚠️ VIP Flight, Transit & Language Coordination Feed")
-        st.markdown(
-            "This synchronization matrix logs flight parameters, languages, and custom guest mandates. "
-            "Deploy **Contingency Protocols** immediately for delayed or urgent items."
-        )
-
-        # Filters
-        filter_cols = st.columns(3)
-        with filter_cols[0]:
-            status_filter = st.selectbox("Filter Status Urgency:", ["All Statuses", "Urgent Alert", "Warning", "Nominal"])
-        with filter_cols[1]:
-            lang_filter = st.selectbox("Filter Language Needs:", ["All Languages", "Spanish", "German", "Japanese", "French", "Portuguese"])
-        with filter_cols[2]:
-            transit_filter = st.selectbox("Filter Transit Mode:", ["All Modes", "Private Escort", "VIP Shuttle", "Charter Bus", "Official Car", "Helicopter"])
-
-        # Compile and Filter VIP Data
-        filtered_vips = st.session_state.vips
-        if status_filter != "All Statuses":
-            filtered_vips = [v for v in filtered_vips if v["status"] == status_filter]
-        if lang_filter != "All Languages":
-            filtered_vips = [v for v in filtered_vips if v["language"] == lang_filter]
-        if transit_filter != "All Modes":
-            filtered_vips = [v for v in filtered_vips if v["transit_mode"] == transit_filter]
-
-        if not filtered_vips:
-            st.info("No active VIP delegations match your selected filters.")
-        else:
-            for idx, vip in enumerate(filtered_vips):
-                # Assign status CSS classes
-                status_class = "badge-nominal"
-                if vip["status"] == "Urgent Alert":
-                    status_class = "badge-urgent"
-                elif vip["status"] == "Warning":
-                    status_class = "badge-warning"
-
-                st.markdown(f"""
-                <div style='background-color: #1E222A; border-radius: 10px; border-left: 6px solid {
-                    '#FF4B4B' if vip["status"] == 'Urgent Alert' else '#FFAA00' if vip["status"] == 'Warning' else '#00FFCC'
-                }; padding: 1.2rem; margin-bottom: 1rem;'>
-                    <div style='display:flex; justify-content:space-between; align-items:center;'>
-                        <h4 style='margin:0; font-size:1.2rem; font-family:"Space Grotesk";'>{vip["name"]} <span style='font-size:0.9rem; color:#BEC2CA;'>({vip["affiliation"]})</span></h4>
-                        <span class="badge {status_class}">{vip["status"]}</span>
-                    </div>
-                    <div style='display:flex; flex-wrap:wrap; gap:1.5rem; margin-top:0.75rem; font-size:0.9rem; color:#BEC2CA;'>
-                        <div><b>📍 Location:</b> {vip["location_desc"]} ({vip["zone"]} Map)</div>
-                        <div><b>🛫 Mode:</b> {vip["transit_mode"]}</div>
-                        <div><b>⏰ ETA:</b> {vip["eta"]}</div>
-                        <div><b>🗣️ Language:</b> {vip["language"]}</div>
-                        <div><b>🎯 Target Suite:</b> {vip["target"]}</div>
-                        <div><b>🚧 Mandates:</b> {vip["mandates"]}</div>
-                    </div>
-                </div>
-                """, unsafe_allow_html=True)
-                
-                # Show Action Buttons for urgent/warning VIPs
-                btn_col1, btn_col2 = st.columns([1, 4])
-                with btn_col1:
-                    if st.button("Trigger Protocol", key=f"prot_{idx}_{vip['name']}"):
-                        st.session_state.selected_contingency = vip
-                with btn_col2:
-                    st.write("")
-
-        # Contingency Protocol Expandable Guidance Drawer
-        if st.session_state.selected_contingency:
-            v_ref = st.session_state.selected_contingency
-            st.markdown("---")
-            st.markdown(
-                f"<div style='border: 1px solid #FF4B4B; border-radius: 8px; padding: 1.5rem; background-color: #161A22;'>"
-                f"<h4 style='color:#FF4B4B; margin-top:0;'>⚠️ CONTINGENCY PLAN DEPLOYED: {v_ref['name']}</h4>"
-                f"<p style='font-size:0.95rem; margin-bottom:15px;'><b>Current Issue:</b> {v_ref['location_desc']}. Target Zone: <b>{v_ref['target']}</b>. Language Barrier: <b>{v_ref['language']}</b>.</p>"
-                "</div>",
-                unsafe_allow_html=True
-            )
-
-            # Match VIO knowledge database to provide contingency instructions
-            matched_key = None
-            if "spanish" in v_ref["language"].lower() or "wheelchair" in v_ref["mandates"].lower():
-                matched_key = "spanish vip wheelchair access path"
-            elif "tokyo" in v_ref["affiliation"].lower() or "japanese" in v_ref["language"].lower():
-                matched_key = "japanese vip translation"
-            elif "german" in v_ref["language"].lower():
-                matched_key = "german vip drop-off"
-            elif "arabic" in v_ref["language"].lower() or "halal" in v_ref["mandates"].lower():
-                matched_key = "arabic vip protocol"
-            
-            if matched_key and matched_key in VIO_KNOWLEDGE:
-                k_data = VIO_KNOWLEDGE[matched_key]
-                st.markdown(f"##### 📋 Operational Checklist: {k_data['title']}")
-                for step_num, step_desc in enumerate(k_data["steps"], 1):
-                    st.markdown(f"**Step {step_num}:** {step_desc}")
-                
-                # Dynamic suggest contact button
-                suggested_staff = None
-                for staff in st.session_state.directory:
-                    if v_ref["language"] in staff["languages"]:
-                        suggested_staff = staff
-                        break
-                
-                if suggested_staff:
-                    st.info(f"💡 **Recommended Action:** Click **Silent Beep** on **{suggested_staff['name']}** ({suggested_staff['role']}) in the Operational Directory tab to escort this VIP party.")
-            else:
-                st.markdown("##### 📋 Standard VIP Reception Protocol")
-                st.markdown("1. Contact Central Command via silent beep or secure channel.")
-                st.markdown(f"2. Station a coordinator at {v_ref['gate']} immediately to handle arrival.")
-                st.markdown(f"3. Clear secure VIP corridor elevators leading to {v_ref['target']}.")
-
-            if st.button("Close Contingency Console"):
-                st.session_state.selected_contingency = None
-                st.rerun()
-
-    # --------------------------------------------------------------------------
-    # TAB 3: 📇 CONTEXT-AWARE OPERATIONAL DIRECTORY & BEACON SYSTEM
-    # --------------------------------------------------------------------------
-    elif tab_selection == "📇 Operational Directory":
-        st.subheader("📇 Stakeholder Operations Directory & Beacon System")
-        st.markdown(
-            "Search and ping fellow field volunteers, team coordinators, and central command. "
-            "Sending a **Silent Beep** signals their wireless handheld receiver, skipping radio frequency jams."
-        )
-
-        search_query = st.text_input("🔍 Search stakeholder database (Name, Role, Zone, or Language):", "")
-
-        # Directory Filtration
-        filtered_directory = st.session_state.directory
-        if search_query:
-            q = search_query.lower()
-            filtered_directory = [
-                p for p in filtered_directory
-                if q in p["name"].lower() or q in p["role"].lower() or q in p["zone"].lower() or q in p["languages"].lower()
-            ]
-
-        # Roster Grid System
-        if not filtered_directory:
-            st.warning("No stadium team members found matching search query.")
-        else:
-            grid_cols = st.columns(2)
-            for idx, person in enumerate(filtered_directory):
-                # alternate columns
-                col_target = grid_cols[idx % 2]
-                
-                with col_target:
-                    # Registry Card
-                    st.markdown(f"""
-                    <div class="profile-card">
-                        <div class="profile-header">
-                            <span class="profile-name">{person["name"]}</span>
-                            <span class="profile-role">{person["role"]}</span>
-                        </div>
-                        <div class="profile-info"><span class="profile-label">📍 Allocation:</span> {person["zone"]}</div>
-                        <div class="profile-info"><span class="profile-label">🗣️ Languages:</span> {person["languages"]}</div>
-                        <div class="profile-info"><span class="profile-label">📶 Status:</span> <span style="color: #00FFCC;">● Active</span></div>
-                        <div class="profile-info"><span class="profile-label">🚨 Sent Beeps:</span> <b>{person["beep_count"]}</b> Pings</div>
-                    </div>
-                    """, unsafe_allow_html=True)
-                    
-                    # Beep Action Trigger Button
-                    if st.button(
-                        f"🚨 SILENT BEEP: {person['name']}", 
-                        key=f"beep_btn_{person['id']}_{idx}", 
-                        use_container_width=True
-                    ):
-                        trigger_beep(person["id"], person["name"], person["zone"])
-                        st.rerun()
-
-    # --------------------------------------------------------------------------
-    # TAB 4: 🤖 VOLUNTEER'S AI SUPPORT AGENT VIO
-    # --------------------------------------------------------------------------
-    elif tab_selection == "🤖 VIO AI Co-Pilot":
-        st.subheader("🤖 VIO Situational Knowledge Assistant")
-        st.markdown(
-            "VIO is a specialized offline situational knowledge assistant. Ask VIO for specific logistical guidance, "
-            "routes, access paths, and protocols for various VIP scenarios."
-        )
-
-        st.markdown("<div class='chat-container'>", unsafe_allow_html=True)
-        st.markdown("💬 **Frequently Searched Instructions:**")
-        
-        # Clickable quick suggestions grid
-        sug_cols = st.columns(3)
-        with sug_cols[0]:
-            if st.button("♿ Spanish Wheelchair Route", use_container_width=True):
-                st.session_state.chat_history.append(
-                    ("Spanish VIP wheelchair access path", VIO_KNOWLEDGE["spanish vip wheelchair access path"])
-                )
-            if st.button("🚗 German FA Drop-off Path", use_container_width=True):
-                st.session_state.chat_history.append(
-                    ("German VIP drop-off", VIO_KNOWLEDGE["german vip drop-off"])
-                )
-        with sug_cols[1]:
-            if st.button("⚡ Gate B to Suite 4 Route", use_container_width=True):
-                st.session_state.chat_history.append(
-                    ("Fastest route from Gate B to Executive Box 4", VIO_KNOWLEDGE["fastest route from gate b to executive box 4"])
-                )
-            if st.button("🇯🇵 Tokyo FC Interpreter Protocol", use_container_width=True):
-                st.session_state.chat_history.append(
-                    ("Japanese VIP translation", VIO_KNOWLEDGE["japanese vip translation"])
-                )
-        with sug_cols[2]:
-            if st.button("🚨 Emergency Medical Evacuation", use_container_width=True):
-                st.session_state.chat_history.append(
-                    ("Emergency medical route", VIO_KNOWLEDGE["emergency medical route"])
-                )
-            if st.button("🕌 Arabic Protocol & Halal", use_container_width=True):
-                st.session_state.chat_history.append(
-                    ("Arabic VIP protocol", VIO_KNOWLEDGE["arabic vip protocol"])
-                )
-
-        st.write("")
-        
-        # Text input query box
-        user_query = st.text_input("💬 Ask VIO Co-Pilot a logistical FAQ (e.g. 'How to route Spanish VIP wheelchair'):")
-        
-        if st.button("Ask Assistant", type="primary"):
-            if user_query:
-                # Basic NLP keyword searching logic
-                q_clean = user_query.lower()
-                matched_key = None
-                
-                # Check for substring matches
-                for key in VIO_KNOWLEDGE.keys():
-                    # extract important words
-                    keywords = key.split(" ")
-                    match_count = sum(1 for kw in keywords if kw in q_clean)
-                    # if substantial overlap or exact match
-                    if key in q_clean or match_count >= 2:
-                        matched_key = key
-                        break
-                
-                # Secondary looser checks for Spanish, German, Japanese, Arabic, medical, route
-                if not matched_key:
-                    if "spanish" in q_clean or "wheelchair" in q_clean:
-                        matched_key = "spanish vip wheelchair access path"
-                    elif "gate b" in q_clean or "box 4" in q_clean or "suite 4" in q_clean:
-                        matched_key = "fastest route from gate b to executive box 4"
-                    elif "german" in q_clean or "deutsch" in q_clean:
-                        matched_key = "german vip drop-off"
-                    elif "japanese" in q_clean or "tokyo" in q_clean or "translation" in q_clean:
-                        matched_key = "japanese vip translation"
-                    elif "emergency" in q_clean or "medical" in q_clean or "ambulance" in q_clean:
-                        matched_key = "emergency medical route"
-                    elif "arabic" in q_clean or "halal" in q_clean or "muslim" in q_clean:
-                        matched_key = "arabic vip protocol"
-
-                if matched_key:
-                    st.session_state.chat_history.append((user_query, VIO_KNOWLEDGE[matched_key]))
-                else:
-                    st.session_state.chat_history.append((
-                        user_query, 
-                        {
-                            "title": "🔍 System Logistical Lookup Failed",
-                            "steps": [
-                                "Query did not match pre-loaded offline logistical guides.",
-                                "Available keywords: 'Spanish wheelchair', 'Gate B to Executive Box 4', 'German drop-off', 'Japanese translator', 'Emergency medical', 'Arabic halal'.",
-                                "Please refine query or contact Command Lead Sarah Connor (Zone: Command Center)."
-                            ]
-                        }
-                    ))
-                st.rerun()
-
-        # Display Chat History log
-        if st.session_state.chat_history:
-            st.write("---")
-            st.markdown("**Assistant Response Feed:**")
-            
-            # Show last response first
-            for query, reply in reversed(st.session_state.chat_history):
-                st.markdown(f"**👤 You:** *\"{query}\"*")
-                
-                # Check if it was a failure or success
-                border_color = "#FF4B4B" if "Failed" in reply["title"] else "#00FFCC"
-                
-                st.markdown(f"""
-                <div style='background-color:#131720; border-left:4px solid {border_color}; padding:1rem; border-radius: 0 8px 8px 0; margin-bottom:1.5rem;'>
-                    <h5 style='margin-top:0; color:#FFFFFF; font-size:1.05rem;'>{reply["title"]}</h5>
-                    <ol style='margin-bottom:0; padding-left:1.2rem; color:#BEC2CA; font-size:0.9rem;'>
-                        {"".join(f"<li style='margin-bottom:0.4rem;'>{step}</li>" for step in reply["steps"])}
-                    </ol>
-                </div>
-                """, unsafe_allow_html=True)
-                
-            if st.button("Clear Consultation Log"):
-                st.session_state.chat_history = []
-                st.rerun()
-
-        st.markdown("</div>", unsafe_allow_html=True)
-
-with col_logs:
-    # --------------------------------------------------------------------------
-    # RIGHT SIDE PANEL: LIVE TERMINAL & BEACON LOGS
-    # --------------------------------------------------------------------------
-    st.markdown(
-        "<h3 style='margin-top: 0px; font-size: 1.15rem; color: #FFFFFF;'>📟 LIVE BEACON LOGS</h3>", 
-        unsafe_allow_html=True
-    )
-    st.markdown(
-        "Real-time audit log tracking data packet broadcasts, silent paging pings, "
-        "and physical simulation updates."
-    )
+with col_sim:
+    st.markdown("<h3 style='margin-top:0px; font-size:1.25rem; font-family:\"Space Grotesk\", sans-serif;'>📐 Dynamic Wireframe Simulation Canvas</h3>", unsafe_allow_html=True)
     
-    # Terminal panel
-    log_content = ""
-    for log in reversed(st.session_state.beep_logs):
-        log_content += f"<div class='terminal-log'>{log}</div>"
+    # Identify which grid class to use
+    if grid_system == "12-Column Grid":
+        grid_overlay_class = "grid-overlay grid-overlay-12"
+    elif grid_system == "4-Column Mobile Grid":
+        grid_overlay_class = "grid-overlay grid-overlay-4"
+    else:
+        grid_overlay_class = "grid-overlay grid-overlay-modular"
+
+    # Assemble HTML Layout based on creative field
+    if selected_field == "UX/UI Design":
+        # Render a case study wireframe layout (Hero -> Problem -> Research Grid -> High-Fi Interactive Canvas)
+        wireframe_html = f"""
+        <div class="wireframe-workspace">
+            <div class="{grid_overlay_class}"></div>
+            
+            <!-- Hero Section -->
+            <div class="wireframe-element" style="grid-column: span 12; margin-bottom: var(--grid-gap); display: flex; flex-direction: column; justify-content: center; min-height: 110px;">
+                <div class="wireframe-label">HERO CONTAINER (col-12)</div>
+                <div style="font-family: {active_typography['display_css']}; font-size: 18px; color: #F3F4F6; margin: 0 0 4px 0; font-weight: bold;">[CASE STUDY HERO HEADING]</div>
+                <div style="font-family: {active_typography['body_css']}; font-size: 10px; color: #9CA3AF; margin: 0 0 10px 0; max-width: 70%;">UX Case Study describing core metrics, problem definition, and design process milestones.</div>
+                <div style="display: flex; gap: 8px;">
+                    <div style="width: 70px; height: 16px; border-radius: 4px; background-color: rgba(124, 58, 237, var(--accent-opacity));"></div>
+                    <div style="width: 50px; height: 16px; border-radius: 4px; border: 1px solid #9CA3AF;"></div>
+                </div>
+            </div>
+            
+            <!-- Problem & Research Row -->
+            <div style="display: grid; grid-template-columns: repeat(12, 1fr); gap: var(--grid-gap); margin-bottom: var(--grid-gap);">
+                <div class="wireframe-element" style="grid-column: span 6; min-height: 100px;">
+                    <div class="wireframe-label">PROBLEM STATEMENT (col-6)</div>
+                    <div style="font-family: {active_typography['display_css']}; font-size: 12px; color: #F3F4F6; margin-bottom: 6px; font-weight: 600;">The Challenge</div>
+                    <div style="font-family: {active_typography['body_css']}; font-size: 9px; color: #9CA3AF; line-height: 1.4;">Users encounter friction during onboarding, causing a drop-off rate of 42% in step 2. We designed a modular stepper to resolve information density issues.</div>
+                </div>
+                <div class="wireframe-element" style="grid-column: span 6; min-height: 100px; display: flex; flex-direction: column; justify-content: space-between;">
+                    <div class="wireframe-label">RESEARCH INSIGHTS (col-6)</div>
+                    <div style="font-family: {active_typography['display_css']}; font-size: 12px; color: #F3F4F6; margin-bottom: 4px; font-weight: 600;">User Archetype Data</div>
+                    <div style="display: flex; gap: 8px; align-items: center;">
+                        <div style="flex: 1; height: 35px; border-left: 2px solid #7C3AED; padding-left: 6px; display: flex; flex-direction: column; justify-content: center;">
+                            <span style="font-size: 12px; font-weight: bold; color: #F3F4F6; font-family: 'Space Grotesk';">78%</span>
+                            <span style="font-size: 7px; color: #9CA3AF; text-transform: uppercase;">Task Success</span>
+                        </div>
+                        <div style="flex: 1; height: 35px; border-left: 2px solid #06B6D4; padding-left: 6px; display: flex; flex-direction: column; justify-content: center;">
+                            <span style="font-size: 12px; font-weight: bold; color: #F3F4F6; font-family: 'Space Grotesk';">-35%</span>
+                            <span style="font-size: 7px; color: #9CA3AF; text-transform: uppercase;">Time-on-Task</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Research Cards -->
+            <div style="display: grid; grid-template-columns: repeat(12, 1fr); gap: var(--grid-gap); margin-bottom: var(--grid-gap);">
+                <div class="wireframe-element" style="grid-column: span 4; min-height: 60px;">
+                    <div class="wireframe-label">PERSONA A (col-4)</div>
+                    <div style="font-family: {active_typography['body_css']}; font-size: 9px; font-weight: bold; color: #F3F4F6;">The Heavy Planner</div>
+                    <div style="font-size: 8px; color: #9CA3AF; margin-top: 2px;">Needs high density grids and multi-task viewports.</div>
+                </div>
+                <div class="wireframe-element" style="grid-column: span 4; min-height: 60px;">
+                    <div class="wireframe-label">PERSONA B (col-4)</div>
+                    <div style="font-family: {active_typography['body_css']}; font-size: 9px; font-weight: bold; color: #F3F4F6;">The Casual User</div>
+                    <div style="font-size: 8px; color: #9CA3AF; margin-top: 2px;">Requires simplified step navigation and progressive disclosure.</div>
+                </div>
+                <div class="wireframe-element" style="grid-column: span 4; min-height: 60px;">
+                    <div class="wireframe-label">PERSONA C (col-4)</div>
+                    <div style="font-family: {active_typography['body_css']}; font-size: 9px; font-weight: bold; color: #F3F4F6;">The Specialist</div>
+                    <div style="font-size: 8px; color: #9CA3AF; margin-top: 2px;">Demands technical schematic graphs and rapid keyboard hotkeys.</div>
+                </div>
+            </div>
+
+            <!-- High-Fi Interactive Canvas -->
+            <div class="wireframe-element" style="grid-column: span 12; min-height: 140px; display: flex; flex-direction: column;">
+                <div class="wireframe-label">HI-FI INTERACTIVE CANVAS (col-12)</div>
+                <div style="display: flex; flex: 1; border: 1px dashed rgba(156, 163, 175, 0.4); border-radius: 4px; background-color: rgba(14, 14, 16, 0.5); overflow: hidden;">
+                    <!-- App Mockup Left Sidebar -->
+                    <div style="width: 32px; border-right: 1px dashed rgba(156, 163, 175, 0.4); display: flex; flex-direction: column; align-items: center; gap: 8px; padding-top: 8px; background-color: rgba(26, 26, 30, 0.8);">
+                        <div style="width: 14px; height: 14px; border-radius: 3px; background-color: rgba(124, 58, 237, 0.3);"></div>
+                        <div style="width: 14px; height: 14px; border-radius: 3px; border: 1px solid rgba(156, 163, 175, 0.5);"></div>
+                        <div style="width: 14px; height: 14px; border-radius: 3px; border: 1px solid rgba(156, 163, 175, 0.5);"></div>
+                    </div>
+                    <!-- App Mockup Content Window -->
+                    <div style="flex: 1; padding: 10px; display: flex; flex-direction: column; justify-content: space-between;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(156, 163, 175, 0.2); padding-bottom: 6px;">
+                            <span style="font-size: 9px; font-family: 'Space Grotesk'; font-weight: 600; color: #FFFFFF;">Workspace Panel</span>
+                            <span style="font-size: 8px; color: #7C3AED;">Active Live View</span>
+                        </div>
+                        <div style="display: flex; gap: 8px; flex: 1; align-items: center; margin-top: 6px;">
+                            <div style="flex: 2; height: 50px; border-radius: 4px; background-color: rgba(255, 255, 255, 0.02); border: 1px solid rgba(156, 163, 175, 0.2); padding: 6px; display: flex; flex-direction: column; justify-content: center; gap: 4px;">
+                                <div style="width: 80%; height: 6px; background-color: #F3F4F6; border-radius: 2px;"></div>
+                                <div style="width: 50%; height: 4px; background-color: #9CA3AF; border-radius: 2px;"></div>
+                            </div>
+                            <div style="flex: 1; height: 50px; border-radius: 4px; border: 1px dashed rgba(124, 58, 237, 0.5); display: flex; justify-content: center; align-items: center;">
+                                <span style="font-size: 8px; color: #7C3AED;">+ Element</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        """
+    elif selected_field == "Industrial Design":
+        # Render blueprint layout focusing on Hero Renders, 3D Component Exploded Views, and Material Spec Tables
+        wireframe_html = f"""
+        <div class="wireframe-workspace">
+            <div class="{grid_overlay_class}"></div>
+            
+            <!-- Technical Canvas with SVG Isometric Draw -->
+            <div class="wireframe-element" style="grid-column: span 12; margin-bottom: var(--grid-gap); min-height: 180px; position: relative;">
+                <div class="wireframe-label">CAD DRAFT & ISOMETRIC HERO SPEC (col-12)</div>
+                <!-- Drawing Overlay SVG -->
+                <div style="position: absolute; top: 0; left: 0; width:100%; height: 100%; z-index: 1; padding: 20px;">
+                    <svg width="100%" height="100%" viewBox="0 0 600 140" fill="none">
+                        <!-- Blueprint Crosshair Grid -->
+                        <line x1="50" y1="0" x2="50" y2="140" stroke="#7C3AED" stroke-opacity="0.1" />
+                        <line x1="300" y1="0" x2="300" y2="140" stroke="#7C3AED" stroke-opacity="0.1" />
+                        <line x1="550" y1="0" x2="550" y2="140" stroke="#7C3AED" stroke-opacity="0.1" />
+                        <line x1="0" y1="70" x2="600" y2="70" stroke="#7C3AED" stroke-opacity="0.1" />
+                        
+                        <!-- Isometric Cube Schematic (Chroma Design Concept) -->
+                        <path d="M 280,30 L 330,60 L 330,110 L 280,80 Z" stroke="#7C3AED" stroke-width="1.5" stroke-opacity="0.9" />
+                        <path d="M 330,60 L 380,30 L 380,80 L 330,110 Z" stroke="#7C3AED" stroke-width="1.5" stroke-opacity="0.9" />
+                        <path d="M 280,30 L 330,0 L 380,30 L 330,60 Z" stroke="#7C3AED" stroke-width="1.5" stroke-opacity="0.9" />
+                        
+                        <!-- Dimension Indicator Lines -->
+                        <line x1="280" y1="90" x2="330" y2="120" class="dim-indicator" />
+                        <line x1="270" y1="80" x2="270" y2="30" class="dim-indicator" />
+                        <text x="290" y="112" class="dim-text">L: 120.00mm</text>
+                        <text x="225" y="60" class="dim-text">H: 85.00mm</text>
+                        
+                        <!-- Radial / callout detail -->
+                        <circle cx="330" cy="60" r="10" stroke="#06B6D4" stroke-width="1" stroke-dasharray="2 2" />
+                        <line x1="340" y1="60" x2="430" y2="45" stroke="#06B6D4" stroke-width="1" />
+                        <text x="435" y="48" fill="#06B6D4" font-family="Fira Code" font-size="9px">FILLET RAD: R10.0</text>
+                    </svg>
+                </div>
+                
+                <div style="position: relative; z-index: 2; font-family: {active_typography['display_css']}; font-size: 15px; color: #FFFFFF; font-weight: bold;">[ISOMETRIC BluePrint DRAFT]</div>
+                <div style="position: relative; z-index: 2; font-family: {active_typography['body_css']}; font-size: 9px; color: #9CA3AF; width: 40%; margin-top: 4px;">Precision exploded mapping of hardware casing, specifying tolerance boundaries and modular internal layout interfaces.</div>
+            </div>
+            
+            <!-- Exploded Component Specs Row -->
+            <div style="display: grid; grid-template-columns: repeat(12, 1fr); gap: var(--grid-gap); margin-bottom: var(--grid-gap);">
+                <div class="wireframe-element" style="grid-column: span 4; min-height: 80px;">
+                    <div class="wireframe-label">SHELL ASSEMBLY (col-4)</div>
+                    <div style="font-family: {active_typography['body_css']}; font-size: 10px; font-weight: bold; color: #F3F4F6; margin-bottom: 2px;">Anodized Shell</div>
+                    <div style="font-size: 8px; color: #9CA3AF;">Material: Aluminum 6061-T6<br>Thickness: 1.80mm<br>Surface Finish: Sandblast bead 120</div>
+                </div>
+                <div class="wireframe-element" style="grid-column: span 4; min-height: 80px;">
+                    <div class="wireframe-label">INTERNAL FRAME (col-4)</div>
+                    <div style="font-family: {active_typography['body_css']}; font-size: 10px; font-weight: bold; color: #F3F4F6; margin-bottom: 2px;">Polycarbonate Core</div>
+                    <div style="font-size: 8px; color: #9CA3AF;">Material: PC-ABS Polymer<br>Fillet Radius: 1.5mm<br>Process: Injection Molded</div>
+                </div>
+                <div class="wireframe-element" style="grid-column: span 4; min-height: 80px;">
+                    <div class="wireframe-label">OPTICAL WINDOW (col-4)</div>
+                    <div style="font-family: {active_typography['body_css']}; font-size: 10px; font-weight: bold; color: #F3F4F6; margin-bottom: 2px;">Gorilla Glass Screen</div>
+                    <div style="font-size: 8px; color: #9CA3AF;">Material: Aluminosilicate Glass<br>Tolerance: &plusmn;0.05mm<br>Coating: Anti-reflective (AR)</div>
+                </div>
+            </div>
+            
+            <!-- Material Specification Table -->
+            <div class="wireframe-element" style="grid-column: span 12; min-height: 120px;">
+                <div class="wireframe-label">MATERIAL & FABRICATION SCHEDULE (col-12)</div>
+                <table style="width: 100%; border-collapse: collapse; font-family: 'Fira Code', monospace; font-size: 8.5px; color: #F3F4F6; margin-top: 10px;">
+                    <thead>
+                        <tr style="border-bottom: 1.5px solid #7C3AED; text-align: left;">
+                            <th style="padding: 4px; color: #7C3AED;">PART ID</th>
+                            <th style="padding: 4px;">MATERIAL SUBSTRATE</th>
+                            <th style="padding: 4px;">PROCESS/METHOD</th>
+                            <th style="padding: 4px; text-align: right;">QTY</th>
+                            <th style="padding: 4px; text-align: right;">UNIT MASS</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr style="border-bottom: 1px solid rgba(156, 163, 175, 0.2);">
+                            <td style="padding: 4px; font-weight: bold; color: #9CA3AF;">DF-01</td>
+                            <td style="padding: 4px;">AA 6061 Hard Case</td>
+                            <td style="padding: 4px;">5-Axis CNC Milling</td>
+                            <td style="padding: 4px; text-align: right;">1</td>
+                            <td style="padding: 4px; text-align: right; color:#7C3AED;">142.5 g</td>
+                        </tr>
+                        <tr style="border-bottom: 1px solid rgba(156, 163, 175, 0.2);">
+                            <td style="padding: 4px; font-weight: bold; color: #9CA3AF;">DF-02</td>
+                            <td style="padding: 4px;">Neodymium Ring Magnet (N52)</td>
+                            <td style="padding: 4px;">Sintering</td>
+                            <td style="padding: 4px; text-align: right;">4</td>
+                            <td style="padding: 4px; text-align: right; color:#7C3AED;">8.2 g</td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 4px; font-weight: bold; color: #9CA3AF;">DF-03</td>
+                            <td style="padding: 4px;">FKM Rubber Seals</td>
+                            <td style="padding: 4px;">Compression Molding</td>
+                            <td style="padding: 4px; text-align: right;">2</td>
+                            <td style="padding: 4px; text-align: right; color:#7C3AED;">1.4 g</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        """
+    else:
+        # Graphic Design: Render asymmetrical, high-impact typography and mood board gallery alignment layout
+        wireframe_html = f"""
+        <div class="wireframe-workspace">
+            <div class="{grid_overlay_class}"></div>
+            
+            <!-- Huge typography header banner (Asymmetrical) -->
+            <div style="display: grid; grid-template-columns: repeat(12, 1fr); gap: var(--grid-gap); margin-bottom: var(--grid-gap);">
+                <div class="wireframe-element" style="grid-column: span 8; min-height: 120px; display: flex; flex-direction: column; justify-content: space-between;">
+                    <div class="wireframe-label">TYPOGRAPHIC FOCAL COMPOSITION (col-8)</div>
+                    <div style="font-family: {active_typography['display_css']}; font-size: 32px; line-height: 0.95; font-weight: bold; letter-spacing: -0.04em; color: #FFFFFF;">
+                        ASYNCH<br><span style="color: #7C3AED; font-style: italic;">METRICAL</span><br>FORM GRID
+                    </div>
+                    <div style="font-family: {active_typography['body_css']}; font-size: 8px; color: #9CA3AF; margin-top: 6px;">
+                        EXPLORING CHROMA PATTERNS AND TYPE CONTRASTS.
+                    </div>
+                </div>
+                <div class="wireframe-element" style="grid-column: span 4; min-height: 120px; display: flex; flex-direction: column; justify-content: space-between; align-items: flex-end; background-color: rgba(124, 58, 237, 0.05); border-color: rgba(124, 58, 237, 0.4);">
+                    <div class="wireframe-label">BALANCE CARD (col-4)</div>
+                    <div style="font-family: 'Fira Code', monospace; font-size: 9px; color: #7C3AED;">[WEIGHT 01]</div>
+                    <div style="text-align: right; font-family: {active_typography['body_css']}; font-size: 10px; color: #F3F4F6;">
+                        1:1.618<br><span style="font-size: 7px; color: #9CA3AF;">Golden Ratio Align</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Moodboard & Gallery Items -->
+            <div style="display: grid; grid-template-columns: repeat(12, 1fr); gap: var(--grid-gap); margin-bottom: var(--grid-gap);">
+                <!-- Asymmetric overlapping column elements -->
+                <div class="wireframe-element" style="grid-column: span 5; min-height: 140px; display: flex; flex-direction: column; justify-content: space-between;">
+                    <div class="wireframe-label">ASSET CONTAINER A (col-5)</div>
+                    <!-- Mock diagonal crop lines represent visual media -->
+                    <div style="flex: 1; width: 100%; border: 1px dashed rgba(156, 163, 175, 0.3); border-radius: 4px; position: relative; background: linear-gradient(135deg, rgba(26, 26, 30, 0.6) 0%, rgba(124, 58, 237, 0.08) 100%);">
+                        <svg width="100%" height="100%" style="position: absolute; top:0; left:0;">
+                            <line x1="0" y1="0" x2="100%" y2="100%" stroke="rgba(156, 163, 175, 0.15)" />
+                            <line x1="100%" y1="0" x2="0" y2="100%" stroke="rgba(156, 163, 175, 0.15)" />
+                        </svg>
+                        <div style="position: absolute; bottom: 6px; left: 6px; font-family: 'Fira Code'; font-size: 7.5px; color: #9CA3AF;">MOOD_FRAME_01.PNG</div>
+                    </div>
+                    <div style="font-family: {active_typography['body_css']}; font-size: 8px; color: #9CA3AF; margin-top: 6px;">Visual identity rendering showing structural branding scale.</div>
+                </div>
+                
+                <div class="wireframe-element" style="grid-column: span 7; min-height: 140px; display: flex; flex-direction: column; justify-content: space-between;">
+                    <div class="wireframe-label">ASSET CONTAINER B (col-7)</div>
+                    <div style="display: flex; gap: 8px; flex: 1;">
+                        <div style="flex: 1; border: 1px dashed rgba(156, 163, 175, 0.3); border-radius: 4px; display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 6px; background-color: rgba(6, 182, 212, 0.02);">
+                            <span style="font-family: 'Space Grotesk'; font-size: 14px; font-weight: bold; color: #7C3AED;">PANTONE</span>
+                            <span style="font-size: 8px; font-family: 'Fira Code'; color: #9CA3AF;">2728 C</span>
+                        </div>
+                        <div style="flex: 1; border: 1px dashed rgba(156, 163, 175, 0.3); border-radius: 4px; padding: 10px; display: flex; flex-direction: column; justify-content: space-between;">
+                            <span style="font-size: 12px; font-family: {active_typography['display_name']}; font-weight: bold;">Chroma System</span>
+                            <span style="font-size: 7.5px; color: #9CA3AF; line-height: 1.3;">Primary CMYK offset layout maps target high contrast print finishes.</span>
+                        </div>
+                    </div>
+                    
+                    <!-- Bottom Swatch bar -->
+                    <div style="display: flex; align-items: center; margin-top: 10px; border-top: 1px solid rgba(156, 163, 175, 0.2); padding-top: 8px;">
+                        <div class="color-swatch" style="background-color: #7C3AED;"></div>
+                        <div class="color-swatch" style="background-color: #EC4899;"></div>
+                        <div class="color-swatch" style="background-color: #1A1A1E;"></div>
+                        <div class="color-swatch" style="background-color: #FFFFFF;"></div>
+                        <span style="font-family: 'Fira Code', monospace; font-size: 7.5px; color: #9CA3AF;">Palette swatches loaded into branding spec registry.</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        """
+
+    # Inject layout & render it
+    st.markdown(wireframe_html, unsafe_allow_html=True)
+    
+    st.write("")
+    
+    # 5. DESIGN TOKEN EXPORTER MECHANISM (JSON + Markdown)
+    st.markdown("<h3 style='font-size:1.25rem; font-family:\"Space Grotesk\", sans-serif;'>💾 Export Design Token Profile</h3>", unsafe_allow_html=True)
+    
+    # Generate Output Configuration Map (JSON)
+    json_config = {
+        "engineName": "DesignForge Layout Blueprint Engine",
+        "configuration": {
+            "creativeField": selected_field,
+            "projectType": project_type,
+            "tone": tone,
+            "gridSystem": grid_system,
+            "spacing": {
+                "gutterGapPx": grid_gap,
+                "cornerRadiusPx": border_radius,
+                "borderThicknessPx": border_thickness,
+                "accentOpacityPercent": accent_opacity
+            },
+            "designTokens": {
+                "fonts": {
+                    "heading": {
+                        "family": active_typography["display_name"],
+                        "css": active_typography["display_css"]
+                    },
+                    "body": {
+                        "family": active_typography["body_name"],
+                        "css": active_typography["body_css"]
+                    },
+                    "pairingRationale": active_typography["archetype"]
+                },
+                "colors": {
+                    "background": active_colors["bg"],
+                    "cardSurface": active_colors["surface"],
+                    "accentPrimary": active_colors["accent"],
+                    "accentPrimaryName": active_colors["accent_text"],
+                    "accentSecondary": active_colors["accent_secondary"],
+                    "accentSecondaryName": active_colors["accent_secondary_text"],
+                    "paletteDescription": active_colors["palette_description"]
+                }
+            }
+        }
+    }
+    
+    # Generate Markdown Blueprint text
+    markdown_blueprint = f"""# DesignForge Portfolio Layout Blueprint
+*Generated on behalf of Creative Field: **{selected_field}***
+*System Architecture Profile: **{project_type}***
+
+---
+
+## 📐 Grid & Bounding System Configuration
+- **Selected Grid Structure:** {grid_system}
+- **Layout Spacing Metrics:**
+  - Column Gutter Gap: `{grid_gap}px`
+  - Container Border Radius: `{border_radius}px`
+  - Wireframe Stroke Boundary: `{border_thickness}px`
+  - Primary Accent Opacity: `{accent_opacity}%`
+
+## 🔠 Typography Pairing Tokens
+- **Tone Profile:** `{tone}`
+- **Display Header Typeface:** `{active_typography['display_name']}`
+  - *Shorthand CSS:* `font-family: {active_typography['display_css']};`
+- **Body Typeface:** `{active_typography['body_name']}`
+  - *Shorthand CSS:* `font-family: {active_typography['body_css']};`
+- **Recommended Hierarchy Scale:**
+  - `{active_typography['scale']}`
+- **Archetype Rationale:**
+  - *{active_typography['archetype']}*
+
+## 🎨 Color Palette Tokens (Scandinavian Clean Mode)
+- **Primary Background:** `{active_colors['bg']}`
+- **Card Surfaces & Panels:** `{active_colors['surface']}`
+- **Primary Design Accent:** `{active_colors['accent']}` (Hex Mapping for `{active_colors['accent_text']}`)
+- **Secondary Interactive Accent:** `{active_colors['accent_secondary']}` (Hex Mapping for `{active_colors['accent_secondary_text']}`)
+- **System Theme Palette Rationale:**
+  - *{active_colors['palette_description']}*
+
+## 📦 Icon Suit Mapping Recommendation
+We map specific SVG icons contextualized for creative tasks in **{selected_field}**. Read the adjacent token registry to view actual SVG structures and configurations.
+"""
+
+    tab_json, tab_md = st.tabs(["JSON Layout Map", "Markdown Blueprint Document"])
+    
+    with tab_json:
+        # Prettified JSON code view
+        json_str = json.dumps(json_config, indent=2)
+        st.code(json_str, language="json")
         
+        # Download button
+        st.download_button(
+            label="Download JSON Profile Map",
+            data=json_str,
+            file_name=f"designforge_{selected_field.lower().replace(' ', '_').replace('/', '_')}_blueprint.json",
+            mime="application/json"
+        )
+        
+    with tab_md:
+        st.code(markdown_blueprint, language="markdown")
+        
+        # Download button
+        st.download_button(
+            label="Download Markdown Blueprint",
+            data=markdown_blueprint,
+            file_name=f"designforge_{selected_field.lower().replace(' ', '_').replace('/', '_')}_blueprint.md",
+            mime="text/markdown"
+        )
+
+# Right Column: Tokens Pane and Icon Suit Recommend
+with col_tokens:
+    st.markdown("<h3 style='margin-top:0px; font-size:1.25rem; font-family:\"Space Grotesk\", sans-serif;'>🗃️ Active Design Token Registry</h3>", unsafe_allow_html=True)
+    
+    # 1. Fonts pairing Pane
     st.markdown(f"""
-    <div class="beacon-terminal">
-        {log_content}
+    <div class="designforge-panel">
+        <h4 style="margin:0 0 10px 0; color:#7C3AED; font-family:'Space Grotesk'; font-size: 1rem;">🔤 Active Typography Token Pairing</h4>
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+            <div>
+                <div style="font-size:11px; color:#9CA3AF; text-transform:uppercase; font-family:'Fira Code';">Header Font (Display)</div>
+                <div style="font-family:{active_typography['display_css']}; font-size:20px; font-weight:bold; color:#FFFFFF;">{active_typography['display_name']}</div>
+            </div>
+            <div style="text-align:right;">
+                <div style="font-size:11px; color:#9CA3AF; text-transform:uppercase; font-family:'Fira Code';">Body Font</div>
+                <div style="font-family:{active_typography['body_css']}; font-size:16px; color:#FFFFFF;">{active_typography['body_name']}</div>
+            </div>
+        </div>
+        <p style="font-size:11px; color:#9CA3AF; margin: 8px 0 0 0; line-height: 1.4; border-top:1px solid #2D2D35; padding-top:8px;">
+            <strong>Archetype:</strong> {active_typography['archetype']}<br>
+            <strong>Recommended Hierarchy Scale:</strong> {active_typography['scale']}
+        </p>
     </div>
     """, unsafe_allow_html=True)
+
+    # 2. Color Palette Token Pane
+    st.markdown(f"""
+    <div class="designforge-panel">
+        <h4 style="margin:0 0 10px 0; color:#7C3AED; font-family:'Space Grotesk'; font-size: 1rem;">🎨 Color Swatch Palettes</h4>
+        <div style="display: flex; flex-direction: column; gap: 8px;">
+            <div style="display: flex; align-items: center; justify-content: space-between;">
+                <div style="display: flex; align-items: center;">
+                    <div class="color-swatch" style="background-color: {active_colors['bg']};"></div>
+                    <div>
+                        <span style="font-size:11px; font-weight:bold; display:block; color:#FFFFFF;">Primary Background</span>
+                        <span style="font-family:'Fira Code'; font-size:9.5px; color:#9CA3AF;">{active_colors['bg']}</span>
+                    </div>
+                </div>
+                <span style="font-size: 9px; padding: 2px 6px; background-color: #202020; border-radius: 4px; font-family:'Fira Code'; color: #9CA3AF;">BASE</span>
+            </div>
+            <div style="display: flex; align-items: center; justify-content: space-between;">
+                <div style="display: flex; align-items: center;">
+                    <div class="color-swatch" style="background-color: {active_colors['surface']};"></div>
+                    <div>
+                        <span style="font-size:11px; font-weight:bold; display:block; color:#FFFFFF;">Card Surface</span>
+                        <span style="font-family:'Fira Code'; font-size:9.5px; color:#9CA3AF;">{active_colors['surface']}</span>
+                    </div>
+                </div>
+                <span style="font-size: 9px; padding: 2px 6px; background-color: #202020; border-radius: 4px; font-family:'Fira Code'; color: #9CA3AF;">SURFACE</span>
+            </div>
+            <div style="display: flex; align-items: center; justify-content: space-between;">
+                <div style="display: flex; align-items: center;">
+                    <div class="color-swatch" style="background-color: {active_colors['accent']};"></div>
+                    <div>
+                        <span style="font-size:11px; font-weight:bold; display:block; color:#FFFFFF;">Primary Accent</span>
+                        <span style="font-family:'Fira Code'; font-size:9.5px; color:#9CA3AF;">{active_colors['accent']}</span>
+                    </div>
+                </div>
+                <span style="font-size: 9px; padding: 2px 6px; background-color: rgba(124,58,237,0.2); border-radius: 4px; font-family:'Fira Code'; color: #7C3AED;">{active_colors['accent_text'].upper()}</span>
+            </div>
+            <div style="display: flex; align-items: center; justify-content: space-between;">
+                <div style="display: flex; align-items: center;">
+                    <div class="color-swatch" style="background-color: {active_colors['accent_secondary']};"></div>
+                    <div>
+                        <span style="font-size:11px; font-weight:bold; display:block; color:#FFFFFF;">Interactive Secondary</span>
+                        <span style="font-family:'Fira Code'; font-size:9.5px; color:#9CA3AF;">{active_colors['accent_secondary']}</span>
+                    </div>
+                </div>
+                <span style="font-size: 9px; padding: 2px 6px; background-color: rgba(6,182,212,0.15); border-radius: 4px; font-family:'Fira Code'; color: {active_colors['accent_secondary']};">{active_colors['accent_secondary_text'].upper()}</span>
+            </div>
+        </div>
+        <p style="font-size:11px; color:#9CA3AF; margin: 10px 0 0 0; line-height: 1.4; border-top:1px solid #2D2D35; padding-top:8px;">
+            <strong>Palette Rule:</strong> {active_colors['palette_description']}
+        </p>
+    </div>
+    """, unsafe_allow_html=True)
+
+    # 3. Interactive SVG Icon Suite recommend pane
+    st.markdown("<h4 style='font-size:1.05rem; font-family:\"Space Grotesk\", sans-serif; margin-bottom: 2px;'>📦 Structural Icon Suite Mapping</h4>", unsafe_allow_html=True)
+    st.markdown(f"<p style='font-size:11px; color:#9CA3AF; margin-top:0px;'>Recommended vector types for active Creative Field: <strong>{selected_field}</strong></p>", unsafe_allow_html=True)
+
+    # Define recommended SVGs for UX/UI
+    ux_ui_icons = [
+        {"name": "app-window", "svg": '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="18" rx="2" ry="2"/><line x1="2" y1="8" x2="22" y2="8"/><line x1="6" y1="5" x2="6" y2="5"/><line x1="10" y1="5" x2="10" y2="5"/></svg>'},
+        {"name": "smartphone", "svg": '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="2" width="14" height="20" rx="2" ry="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg>'},
+        {"name": "mouse-pointer", "svg": '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3l7.07 16.97 2.51-7.39 7.39-2.51L3 3z"/><path d="M13 13l6 6"/></svg>'},
+        {"name": "layers", "svg": '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polygon points="2 17 12 22 22 17"/><polygon points="2 12 12 17 22 12"/></svg>'},
+        {"name": "layout-grid", "svg": '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="9"/><rect x="14" y="3" width="7" height="5"/><rect x="14" y="12" width="7" height="9"/><rect x="3" y="16" width="7" height="5"/></svg>'},
+        {"name": "app-window-ai", "svg": '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="18" rx="2" ry="2"/><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg>'},
+        {"name": "sliders", "svg": '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="21" x2="4" y2="14"/><line x1="4" y1="10" x2="4" y2="3"/><line x1="12" y1="21" x2="12" y2="12"/><line x1="12" y1="8" x2="12" y2="3"/><line x1="20" y1="21" x2="20" y2="16"/><line x1="20" y1="12" x2="20" y2="3"/><line x1="1" y1="14" x2="7" y2="14"/><line x1="9" y1="8" x2="15" y2="8"/><line x1="17" y1="16" x2="23" y2="16"/></svg>'},
+        {"name": "sparkles", "svg": '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364-6.364l-.707.707M6.343 17.657l-.707.707m0-12.728l.707.707m11.314 11.314l.707.707M12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8z"/></svg>'}
+    ]
+
+    industrial_icons = [
+        {"name": "drafting-compass", "svg": '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v2"/><path d="M12 4l-4 16"/><path d="M12 4l4 16"/><path d="M8 15h8"/><path d="M12 2a2 2 0 1 1 0 4 2 2 0 0 1 0-4z"/></svg>'},
+        {"name": "cog-gear", "svg": '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>'},
+        {"name": "caliper-ruler", "svg": '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 3h14c1.1 0 2 .9 2 2v14c0 1.1-.9 2-2 2H5c-1.1 0-2-.9-2-2V5c0-1.1.9-2 2-2z"/><path d="M3 9h4"/><path d="M3 15h4"/><path d="M9 3v4"/><path d="M15 3v4"/></svg>'},
+        {"name": "microchip-cpu", "svg": '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="2"/><rect x="9" y="9" width="6" height="6"/><line x1="9" y1="1" x2="9" y2="4"/><line x1="15" y1="1" x2="15" y2="4"/><line x1="9" y1="20" x2="9" y2="23"/><line x1="15" y1="20" x2="15" y2="23"/><line x1="20" y1="9" x2="23" y2="9"/><line x1="20" y1="15" x2="23" y2="15"/><line x1="1" y1="9" x2="4" y2="9"/><line x1="1" y1="15" x2="4" y2="15"/></svg>'},
+        {"name": "box-exploded", "svg": '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>'},
+        {"name": "schematic-node", "svg": '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>'},
+        {"name": "scale-measure", "svg": '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 3H6a3 3 0 0 0-3 3v12a3 3 0 0 0 3 3h12a3 3 0 0 0 3-3V6a3 3 0 0 0-3-3z"/><line x1="9" y1="3" x2="9" y2="9"/><line x1="15" y1="3" x2="15" y2="9"/><line x1="3" y1="12" x2="21" y2="12"/></svg>'},
+        {"name": "wrench-specs", "svg": '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>'}
+    ]
+
+    graphic_icons = [
+        {"name": "art-palette", "svg": '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22C17.5228 22 22 17.5228 22 12C22 6.47715 17.5228 2 12 2C6.47715 2 2 6.47715 2 12C2 14.7255 3.09032 17.1962 4.85857 19C5.03456 19.176 5.28135 19.2435 5.519 19.1818L6.4445 18.941C6.91572 18.8184 7.4116 18.9712 7.73715 19.3392L8.6083 20.3248C8.94821 20.7093 9.45892 20.9167 9.98818 20.8687L11.5362 20.728C11.6888 20.7141 11.8436 20.7141 11.9962 20.728L12 22Z"/><circle cx="7.5" cy="10.5" r="1.5" fill="currentColor"/><circle cx="11.5" cy="7.5" r="1.5" fill="currentColor"/><circle cx="16.5" cy="9.5" r="1.5" fill="currentColor"/></svg>'},
+        {"name": "paint-brush", "svg": '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 22H6a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h8l6 6v12a2 2 0 0 1-2 2z"/><path d="M14 2v6h6"/><path d="M12 18h.01"/><path d="M11 12a1 1 0 1 0 2 0 1 1 0 0 0-2 0z"/></svg>'},
+        {"name": "type-tool", "svg": '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="4 7 4 4 20 4 20 7"/><line x1="9" y1="20" x2="15" y2="20"/><line x1="12" y1="4" x2="12" y2="20"/></svg>'},
+        {"name": "crop-alignment", "svg": '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 1v3H1"/><path d="M18 23v-3h5"/><rect x="6" y="4" width="12" height="16" rx="2"/></svg>'},
+        {"name": "bezier-pen", "svg": '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22C17.5228 22 22 17.5228 22 12C22 6.47715 17.5228 2 12 2C6.47715 2 2 6.47715 2 12C2 14.7255 3.09032 17.1962 4.85857 19"/><path d="M12 2v6m0 8v6M2 12h6m8 0h6"/></svg>'},
+        {"name": "gallery-image", "svg": '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>'},
+        {"name": "scissors-crop", "svg": '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><line x1="9.8" y1="8.2" x2="20" y2="18.4"/><line x1="9.8" y1="15.8" x2="20" y2="5.6"/></svg>'},
+        {"name": "compass-explore", "svg": '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"/></svg>'}
+    ]
+
+    active_icons = ux_ui_icons
+    if selected_field == "Industrial Design":
+        active_icons = industrial_icons
+    elif selected_field == "Graphic Design":
+        active_icons = graphic_icons
+
+    # Display icons in a beautiful layout
+    icon_grid_html = '<div class="icon-list-grid">'
+    for ico in active_icons:
+        icon_grid_html += f"""
+        <div class="icon-card">
+            <div class="icon-svg-container">{ico['svg']}</div>
+            <div class="icon-name">{ico['name']}</div>
+        </div>
+        """
+    icon_grid_html += '</div>'
+
+    st.markdown(icon_grid_html, unsafe_allow_html=True)
     
-    # Quick clear logs button
-    if st.button("Clear Broadcast Log", use_container_width=True):
-        st.session_state.beep_logs = [
-            f"[{datetime.datetime.now().strftime('%H:%M:%S')}] Broadcast log cleared by operator."
-        ]
-        st.rerun()
-        
-    # Info panel
-    st.write("---")
-    st.markdown(
-        "<div style='background-color: #1E222A; border-radius: 8px; padding: 1rem; border: 1px solid #2D333F; font-size: 0.85rem; color:#BEC2CA;'>"
-        "<b>📢 Volunteer Tip:</b> Matchday communication is congested. Use <b>Silent Beep</b> first. "
-        "Escort VIPs through security lanes equipped for wide-load wheelchair clearances "
-        "to satisfy special mandates."
-        "</div>",
-        unsafe_allow_html=True
-    )
+    st.write("")
+    
+    # Render interactive details block explaining the architecture
+    st.markdown(f"""
+    <div class="designforge-panel" style="margin-top: 10px;">
+        <h4 style="margin:0 0 10px 0; color:#7C3AED; font-family:'Space Grotesk'; font-size: 1rem;">🔧 Grid System Details</h4>
+        <div style="font-family:'Fira Code', monospace; font-size: 10px; color:#F3F4F6;">
+            <strong>GRID SPECIFICATION:</strong> {grid_system}<br>
+            <strong>COLUMN GUTTER GAP:</strong> {grid_gap}px<br>
+            <strong>INNER CORNER RADIUS:</strong> {border_radius}px<br>
+            <strong>ACCENT OVERLAY OPACITY:</strong> {accent_opacity}%<br>
+            <strong>BORDER STROKE WEIGHT:</strong> {border_thickness}px
+        </div>
+        <p style="font-size:11px; color:#9CA3AF; margin: 8px 0 0 0; line-height: 1.4; border-top:1px solid #2D2D35; padding-top:8px;">
+            The simulation grid renders repeating linear gradients dynamically matching parameter configurations. Increase Border Radius to soften block enclosures or raise Glow Opacity to enhance hover visual indicators.
+        </p>
+    </div>
+    """, unsafe_allow_html=True)
