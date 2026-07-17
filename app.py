@@ -1100,7 +1100,7 @@ with col_tokens:
     elif selected_field == "Graphic Design":
         active_icons = graphic_icons
 
-    # Display icons in a beautiful layout
+    # Display icons in a beautiful layout inside an isolated iframe component
     icon_grid_html = '<div class="icon-list-grid">'
     for ico in active_icons:
         icon_grid_html += f"""
@@ -1111,8 +1111,61 @@ with col_tokens:
         """
     icon_grid_html += '</div>'
 
-    st.markdown(icon_grid_html, unsafe_allow_html=True)
-    
+    icon_iframe_src = f"""
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <meta charset="utf-8">
+        <style>
+        body {{
+            margin: 0;
+            padding: 0;
+            background-color: #1A1A1E;
+            color: #F3F4F6;
+            font-family: 'Inter', sans-serif;
+            overflow: hidden;
+        }}
+        .icon-list-grid {{
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 12px;
+        }}
+        .icon-card {{
+            background-color: #121214;
+            border: 1px solid #2D2D35;
+            border-radius: 6px;
+            padding: 10px;
+            text-align: center;
+            transition: all 0.2s ease;
+        }}
+        .icon-card:hover {{
+            border-color: #7C3AED;
+            background-color: #1A1624;
+        }}
+        .icon-svg-container {{
+            color: #7C3AED;
+            margin-bottom: 6px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }}
+        .icon-name {{
+            font-family: 'Fira Code', monospace;
+            font-size: 10px;
+            color: #9CA3AF;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }}
+        </style>
+    </head>
+    <body>
+        {icon_grid_html}
+    </body>
+    </html>
+    """
+    st.components.v1.html(icon_iframe_src, height=155, scrolling=False)
+
     st.write("")
     
     # Render interactive details block explaining the architecture
