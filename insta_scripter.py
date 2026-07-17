@@ -3,7 +3,11 @@ import os
 import io
 import re
 import tempfile
-from gtts import gTTS
+try:
+    from gtts import gTTS
+    GTTS_AVAILABLE = True
+except ImportError:
+    GTTS_AVAILABLE = False
 
 # ---------------------------------------------------------
 # Page Configurations & Setup
@@ -632,7 +636,9 @@ with tab3:
         st.markdown("### 🔊 Synthetic Voiceover Compilation")
         
         # Audio rendering controller
-        if st.session_state.audio_bytes is None:
+        if not GTTS_AVAILABLE:
+            st.error("The synthetic voice compilation library (`gtts`) is not loaded. Please ensure it is installed in requirements.txt.")
+        elif st.session_state.audio_bytes is None:
             with st.spinner("Processing script audio compile... please wait."):
                 # Strip out formatting/cues from speech output
                 speech_text = re.sub(r'\[.*?\]', '', st.session_state.viral_script)
