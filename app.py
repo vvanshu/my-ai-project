@@ -180,8 +180,10 @@ st.markdown(IVORY_THEME_CSS, unsafe_allow_html=True)
 # ==============================================================================
 # 2. STATE MANAGEMENT & SESSION SYSTEM
 # ==============================================================================
-if 'archetype' not in st.session_state:
+valid_archetypes = ["The Failure-to-Success Journey", "The Unpopular Opinion", "The Tactical Playbook"]
+if 'archetype' not in st.session_state or st.session_state.archetype not in valid_archetypes:
     st.session_state.archetype = "The Failure-to-Success Journey"
+
 
 if 'user_notes' not in st.session_state:
     st.session_state.user_notes = "I spent 3 years trying to build micro-saas tools. Most of them failed to gain users because I focused entirely on design instead of distribution. Finally pivoted to local client services, launched in 2 weeks, and earned $12k in monthly recurring revenue."
@@ -343,8 +345,8 @@ st.sidebar.write("### 🎛️ Engine Configuration")
 
 selected_archetype = st.sidebar.selectbox(
     "Select Copy Archetype",
-    ["The Failure-to-Success Journey", "The Unpopular Opinion", "The Tactical Playbook"],
-    index=["The Failure-to-Success Journey", "The Unpopular Opinion", "The Tactical Playbook"].index(st.session_state.archetype),
+    valid_archetypes,
+    index=valid_archetypes.index(st.session_state.archetype),
     key="selected_archetype"
 )
 st.session_state.archetype = selected_archetype
