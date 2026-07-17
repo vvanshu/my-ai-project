@@ -258,6 +258,29 @@ def inject_maximalist_css():
         font-size: 0.85rem;
     }
 
+    /* Scroll effect timeline container */
+    .scroll-timeline {
+        max-height: 480px;
+        overflow-y: auto;
+        padding-right: 15px;
+        border: 3px solid #111111 !important;
+        padding: 20px !important;
+        background-color: #FFFFFF !important;
+        margin-top: 15px !important;
+        box-shadow: inset 3px 3px 0px 0px rgba(0,0,0,0.05) !important;
+    }
+    .scroll-timeline::-webkit-scrollbar {
+        width: 8px;
+    }
+    .scroll-timeline::-webkit-scrollbar-track {
+        background: #F9F9F9;
+        border-left: 2px solid #111111;
+    }
+    .scroll-timeline::-webkit-scrollbar-thumb {
+        background-color: #111111;
+        border: 1px solid #F9F9F9;
+    }
+
     /* High contrast text accessibility rules */
     div[data-testid="stRadio"] label p, 
     div[data-testid="stRadio"] label span, 
@@ -622,6 +645,8 @@ with tab2:
                 </p>
                 """, unsafe_allow_html=True)
             
+            # Render scrollable container for the timeline items
+            st.markdown('<div class="scroll-timeline">', unsafe_allow_html=True)
             for index, shot in enumerate(st.session_state.storyboard_list):
                 st.markdown(f"""
                 <div class="timeline-item">
@@ -633,7 +658,7 @@ with tab2:
                     </p>
                 </div>
                 """, unsafe_allow_html=True)
-                
+            st.markdown('</div>', unsafe_allow_html=True)
             st.markdown('</div>', unsafe_allow_html=True)
             
         with col_right_studio:
@@ -642,17 +667,22 @@ with tab2:
             
             st.markdown("""
             <p style="font-size: 0.85rem; color: #555; font-family: 'Space Mono', monospace; margin-bottom: 15px;">
-                Note: Sentence fragments have been restructured, typos eliminated, and pacing cues injected.
+                Note:restructured sentences, typo-free and editable. Edits will instantly update the audio preview lab.
             </p>
             """, unsafe_allow_html=True)
             
-            # Format display
-            st.text_area(
-                "Final Script Script Outline:",
+            # Editable layout outline editor
+            edited_script = st.text_area(
+                "Final Script Script Outline (Editable):",
                 value=st.session_state.viral_script,
                 height=450,
-                disabled=True
+                key="script_editor_area"
             )
+            
+            # Detect changes and invalidate voiceover cached file to rebuild
+            if edited_script != st.session_state.viral_script:
+                st.session_state.viral_script = edited_script
+                st.session_state.audio_bytes = None
             st.markdown('</div>', unsafe_allow_html=True)
 
 # ---------------------------------------------------------
