@@ -5,7 +5,7 @@ import json
 # 1. PAGE SETUP & MINIMALIST IVORY THEME CONFIG
 # ==============================================================================
 st.set_page_config(
-    page_title="DesignForge // Copywriter Engine",
+    page_title="LinkedIn Post Generator",
     page_icon="✍️",
     layout="wide",
     initial_sidebar_state="expanded"
@@ -370,8 +370,8 @@ if not st.session_state.transformed_output:
 # Header display title
 st.markdown(f"""
 <div class="engine-header">
-    <div class="engine-title">DesignForge Copywriter Engine</div>
-    <div class="engine-subtitle">Minimalist Ivory Layout • Reactive Transformation Engine</div>
+    <div class="engine-title">LinkedIn Post Generator</div>
+    <div class="engine-subtitle">Viral hooks, readability compatibility, CTA</div>
 </div>
 """, unsafe_allow_html=True)
 
@@ -468,7 +468,7 @@ with col_info:
 st.write("---")
 st.markdown("### 📥 Active Export JSON Spec Map")
 json_config = {
-    "engineName": "DesignForge Copywriter Engine",
+    "engineName": "LinkedIn Post Generator",
     "version": "1.0.0",
     "configuration": {
         "activeArchetype": st.session_state.archetype,
