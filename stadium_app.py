@@ -86,12 +86,58 @@ div[data-baseweb="tab-border"] {
     text-align: center;
     box-shadow: 0 4px 15px rgba(0,0,0,0.35);
     transition: all 0.3s ease;
+    position: relative;
 }
 .metric-card:hover { border-color: #00FFCC; transform: translateY(-2px); }
+.metric-card:hover .card-tooltip { opacity: 1; visibility: visible; transform: translateY(0); }
 .metric-title { font-size: 0.78rem; color: #A0C0D0; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; }
 .metric-val { font-size: 1.7rem; color: #FFFFFF; font-weight: 700; margin: 0.3rem 0; font-family: 'Space Grotesk', sans-serif; }
 .metric-desc { font-size: 0.72rem; color: #00FFCC; font-weight: 500; }
 .metric-desc.urgent { color: #FF4B4B; }
+
+/* === METRIC CARD HOVER TOOLTIP === */
+.card-tooltip {
+    position: absolute;
+    bottom: calc(100% + 10px);
+    left: 50%;
+    transform: translateX(-50%) translateY(6px);
+    background-color: #0A1020;
+    border: 1px solid #1E3A52;
+    border-radius: 10px;
+    padding: 0.75rem 1rem;
+    min-width: 220px;
+    max-width: 300px;
+    z-index: 1000;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.25s ease;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+    text-align: left;
+    font-size: 0.8rem;
+    color: #BEC2CA;
+    line-height: 1.5;
+}
+.card-tooltip::after {
+    content: '';
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    border: 6px solid transparent;
+    border-top-color: #1E3A52;
+}
+.card-tooltip .tip-title {
+    font-weight: 700;
+    color: #FFFFFF;
+    font-size: 0.82rem;
+    margin-bottom: 4px;
+}
+.card-tooltip.urgent-tip {
+    border-color: #FF4B4B;
+}
+.card-tooltip.urgent-tip::after {
+    border-top-color: #FF4B4B;
+}
 
 /* === PROFILE BADGE === */
 .profile-badge {
@@ -561,28 +607,77 @@ with col_profile:
 # 13. METRIC CARDS ROW
 # ==============================================================================
 total_vips = len(st.session_state.vips)
-urgent_vips = len([v for v in st.session_state.vips if v["status"] == "Urgent Alert"])
+urgent_vips_list = [v for v in st.session_state.vips if v["status"] == "Urgent Alert"]
+urgent_vips = len(urgent_vips_list)
+warning_vips_list = [v for v in st.session_state.vips if v["status"] == "Warning"]
+nominal_vips = len([v for v in st.session_state.vips if v["status"] == "Nominal"])
 total_alerts = sum(p["beep_count"] for p in st.session_state.directory)
 phase_label = TIMELINE_LABELS[st.session_state.timeline_phase]
+
+# Build dynamic tooltip content for each card
+phase_tips = {
+    0: "Gates open soon. Volunteers should be at stations. First VIP arrivals expected shortly.",
+    1: "Gates are open. Active guest arrivals underway. Stay alert at your assigned zone.",
+    2: "Peak check-in window. All priority guests should be approaching their seats.",
+    3: "Kick-off is imminent. Final corridor sweeps and security checks in progress."
+}
+phase_tip = phase_tips[st.session_state.timeline_phase]
+
+guest_names = ", ".join([v["name"] for v in st.session_state.vips[:3]])
+guest_tip = f"Currently tracking: {guest_names}{'...' if total_vips > 3 else ''}. Check the Expected Client Arrivals tab for full details."
+
+# Build urgent tooltip with specific guest details
+if urgent_vips > 0:
+    urgent_details = "".join(
+        f"<div style='margin-bottom:4px;'>🚨 <b>{v['name']}</b> — {v['location_desc']}<br/>"
+        f"<span style='font-size:0.72rem; color:#FF8888;'>📋 {v['mandates']}</span></div>"
+        for v in urgent_vips_list
+    )
+    urgent_tip = urgent_details
+else:
+    urgent_tip = "✅ No urgent issues. All guest arrivals are on track."
+
+alerted_staff = [p for p in st.session_state.directory if p["beep_count"] > 0]
+if alerted_staff:
+    alert_tip = "Recently alerted: " + ", ".join([f"{p['name']} ({p['beep_count']}x)" for p in alerted_staff]) + "."
+else:
+    alert_tip = "No alerts sent yet. Use Quick Alerts in the Team Directory tab to page a teammate."
 
 st.markdown(f"""
 <div class="metric-container">
     <div class="metric-card">
+        <div class="card-tooltip">
+            <div class="tip-title">⏱️ Timeline Info</div>
+            {phase_tip}
+        </div>
         <div class="metric-title">Matchday Phase</div>
         <div class="metric-val" style="font-size:1.2rem;">{phase_label}</div>
         <div class="metric-desc">Phase {st.session_state.timeline_phase} of 3</div>
     </div>
     <div class="metric-card">
+        <div class="card-tooltip">
+            <div class="tip-title">👥 Guest Overview</div>
+            {guest_tip}<br/>
+            <span style="font-size:0.72rem;">⚠️ {len(warning_vips_list)} delayed · ✅ {nominal_vips} on track</span>
+        </div>
         <div class="metric-title">Expected Guests</div>
         <div class="metric-val">{total_vips}</div>
         <div class="metric-desc">Actively Monitored</div>
     </div>
     <div class="metric-card">
+        <div class="card-tooltip {'urgent-tip' if urgent_vips > 0 else ''}">
+            <div class="tip-title" style="color: {'#FF4B4B' if urgent_vips > 0 else '#00FFCC'};">{'🚨 Urgent — Action Required' if urgent_vips > 0 else '✅ All Clear'}</div>
+            {urgent_tip}
+        </div>
         <div class="metric-title">Urgent Arrivals</div>
         <div class="metric-val" style="color: {'#FF4B4B' if urgent_vips > 0 else '#00FFCC'}">{urgent_vips}</div>
         <div class="metric-desc {'urgent' if urgent_vips > 0 else ''}">{"Needs Attention" if urgent_vips > 0 else "All Clear"}</div>
     </div>
     <div class="metric-card">
+        <div class="card-tooltip">
+            <div class="tip-title">📨 Alert Summary</div>
+            {alert_tip}
+        </div>
         <div class="metric-title">Alerts Sent Today</div>
         <div class="metric-val">{total_alerts}</div>
         <div class="metric-desc">Team Members Pinged</div>
