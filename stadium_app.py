@@ -174,36 +174,32 @@ div[data-baseweb="tab-border"] {
 .schedule-status.active { color: #0A66C2; }
 .schedule-status.pending { color: #8E929A; }
 
-/* === FLOATING VIO BOT === */
-.vio-float-btn {
-    position: fixed;
-    bottom: 28px;
-    right: 28px;
-    z-index: 9999;
+/* === VIO ASSISTANT BUTTON === */
+.vio-launch-btn {
     background: linear-gradient(135deg, #0A66C2, #00FFCC);
-    width: 62px; height: 62px;
-    border-radius: 50%;
-    display: flex; align-items: center; justify-content: center;
-    font-size: 1.8rem;
-    box-shadow: 0 6px 20px rgba(0,255,204,0.3);
+    border-radius: 12px;
+    padding: 0.8rem 1.2rem;
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
     cursor: pointer;
     transition: all 0.3s ease;
-    border: 2px solid #00FFCC;
+    border: 1px solid #00FFCC;
+    box-shadow: 0 4px 15px rgba(0,255,204,0.2);
+    margin-bottom: 1rem;
 }
-.vio-float-btn:hover { transform: scale(1.1); box-shadow: 0 8px 28px rgba(0,255,204,0.45); }
-.vio-speech-bubble {
-    position: fixed;
-    bottom: 98px;
-    right: 24px;
-    z-index: 9998;
-    background-color: #122030;
+.vio-launch-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 22px rgba(0,255,204,0.35);
+}
+.vio-chat-window {
+    background-color: #0A1020;
     border: 1px solid #1E3A52;
-    border-radius: 12px 12px 0 12px;
-    padding: 0.8rem 1rem;
-    max-width: 260px;
-    font-size: 0.82rem;
-    color: #BEC2CA;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.4);
+    border-radius: 14px;
+    padding: 0;
+    margin-bottom: 1.5rem;
+    box-shadow: 0 8px 30px rgba(0,0,0,0.4);
+    overflow: hidden;
 }
 
 /* === ONBOARDING CARD === */
@@ -619,14 +615,133 @@ if urgent_list:
     )
 
 # ==============================================================================
-# 15. CENTRAL TABS NAVIGATION (IGNITION AURA)
+# 15. VIO ASSISTANT — MAIN SCREEN BUTTON + CHAT WINDOW
 # ==============================================================================
-tab_map, tab_arrivals, tab_team, tab_schedule, tab_vio = st.tabs([
+_vio_btn_col, _vio_spacer = st.columns([1, 3])
+with _vio_btn_col:
+    st.markdown("""
+    <div class="vio-launch-btn">
+        <div style="width:40px; height:40px; border-radius:50%; background:rgba(255,255,255,0.15);
+                    display:flex; align-items:center; justify-content:center; font-size:1.3rem;
+                    border:2px solid rgba(255,255,255,0.3); flex-shrink:0;">🤖</div>
+        <div>
+            <div style="font-size:0.95rem; font-weight:700; color:#FFFFFF;">VIO Assistant</div>
+            <div style="font-size:0.7rem; color:rgba(255,255,255,0.8);">Ask about routes & protocols</div>
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
+    if st.button("🤖 Open VIO Assistant" if not st.session_state.show_vio_chat else "✕ Close VIO Assistant", use_container_width=True, key="vio_toggle_btn", type="primary" if not st.session_state.show_vio_chat else "secondary"):
+        st.session_state.show_vio_chat = not st.session_state.show_vio_chat
+        st.rerun()
+
+# VIO Chat Window (shown when toggled open)
+if st.session_state.show_vio_chat:
+    st.markdown('<div class="vio-chat-window">', unsafe_allow_html=True)
+
+    # Chat header
+    st.markdown("""
+    <div style='background:linear-gradient(135deg, #0A66C2, #00FFCC); padding:1rem 1.4rem;
+                display:flex; align-items:center; gap:1rem;'>
+        <div style='width:46px; height:46px; border-radius:50%; background:rgba(255,255,255,0.15);
+                    display:flex; align-items:center; justify-content:center; font-size:1.5rem;
+                    border:2px solid rgba(255,255,255,0.3);'>🤖</div>
+        <div>
+            <div style='font-size:1.05rem; font-weight:700; color:#FFFFFF;'>VIO — Volunteer Intelligent Operator</div>
+            <div style='font-size:0.78rem; color:rgba(255,255,255,0.85);'>Online • Ask me anything about venue routing, guest handling, or emergency protocols</div>
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
+
+    # Chat body
+    with st.container():
+        st.markdown("**💬 Suggested Questions — tap any for instant guidance:**")
+        vq1, vq2, vq3 = st.columns(3)
+        with vq1:
+            if st.button("♿ Spanish Wheelchair Route", use_container_width=True, key="vio_q1"):
+                st.session_state.chat_history.append(("Spanish VIP wheelchair access path", VIO_KNOWLEDGE["spanish vip wheelchair access path"]))
+                st.rerun()
+            if st.button("🚗 German FA Drop-off", use_container_width=True, key="vio_q2"):
+                st.session_state.chat_history.append(("German VIP drop-off", VIO_KNOWLEDGE["german vip drop-off"]))
+                st.rerun()
+        with vq2:
+            if st.button("⚡ Gate B → Suite 4", use_container_width=True, key="vio_q3"):
+                st.session_state.chat_history.append(("Fastest route from Gate B to Executive Box 4", VIO_KNOWLEDGE["fastest route from gate b to executive box 4"]))
+                st.rerun()
+            if st.button("🇯🇵 Tokyo FC Protocol", use_container_width=True, key="vio_q4"):
+                st.session_state.chat_history.append(("Japanese VIP translation", VIO_KNOWLEDGE["japanese vip translation"]))
+                st.rerun()
+        with vq3:
+            if st.button("🚨 Emergency Medical", use_container_width=True, key="vio_q5"):
+                st.session_state.chat_history.append(("Emergency medical route", VIO_KNOWLEDGE["emergency medical route"]))
+                st.rerun()
+            if st.button("🕌 Arabic / Halal Protocol", use_container_width=True, key="vio_q6"):
+                st.session_state.chat_history.append(("Arabic VIP protocol", VIO_KNOWLEDGE["arabic vip protocol"]))
+                st.rerun()
+
+        st.write("")
+        user_q = st.text_input("💬 Type your question here...", key="vio_input", placeholder="e.g. 'How do I escort a wheelchair guest to the Royal Box?'")
+        vio_send_col, vio_clear_col = st.columns([4, 1])
+        with vio_send_col:
+            send_pressed = st.button("Send ➤", type="primary", use_container_width=True, key="vio_send")
+        with vio_clear_col:
+            if st.button("🗑️ Clear", use_container_width=True, key="vio_clear"):
+                st.session_state.chat_history = []
+                st.rerun()
+
+        if send_pressed and user_q:
+            q_clean = user_q.lower()
+            matched = None
+            for key in VIO_KNOWLEDGE:
+                kws = key.split()
+                if key in q_clean or sum(1 for kw in kws if kw in q_clean) >= 2:
+                    matched = key
+                    break
+            if not matched:
+                if "spanish" in q_clean or "wheelchair" in q_clean: matched = "spanish vip wheelchair access path"
+                elif "gate b" in q_clean or "box 4" in q_clean or "suite 4" in q_clean: matched = "fastest route from gate b to executive box 4"
+                elif "german" in q_clean: matched = "german vip drop-off"
+                elif "japanese" in q_clean or "tokyo" in q_clean: matched = "japanese vip translation"
+                elif "emergency" in q_clean or "medical" in q_clean: matched = "emergency medical route"
+                elif "arabic" in q_clean or "halal" in q_clean: matched = "arabic vip protocol"
+            if matched:
+                st.session_state.chat_history.append((user_q, VIO_KNOWLEDGE[matched]))
+            else:
+                st.session_state.chat_history.append((user_q, {
+                    "title": "🔍 No Matching Guide Found",
+                    "steps": [
+                        "Your query didn't match any pre-loaded guides.",
+                        "Try keywords like: 'Spanish wheelchair', 'Gate B Suite 4', 'German drop-off', 'Japanese translator', 'emergency medical', 'Arabic halal'.",
+                        "Or contact your Team Lead for live assistance."
+                    ]
+                }))
+            st.rerun()
+
+        # Chat history
+        if st.session_state.chat_history:
+            st.markdown("---")
+            st.markdown("**📜 Conversation History:**")
+            for query, reply in reversed(st.session_state.chat_history):
+                bc = "#FF4B4B" if "No Matching" in reply["title"] else "#00FFCC"
+                st.markdown(f"**You asked:** *\"{query}\"*")
+                st.markdown(f"""
+                <div style='background:#08121E; border-left:4px solid {bc}; padding:1rem; border-radius:0 10px 10px 0; margin-bottom:1rem;'>
+                    <div style='margin-top:0; color:#FFFFFF; font-size:1rem; font-weight:600;'>{reply["title"]}</div>
+                    <ol style='margin-bottom:0; padding-left:1.2rem; color:#BEC2CA; font-size:0.88rem; margin-top:0.5rem;'>
+                        {"".join(f"<li style='margin-bottom:0.3rem;'>{s}</li>" for s in reply["steps"])}
+                    </ol>
+                </div>
+                """, unsafe_allow_html=True)
+
+    st.markdown('</div>', unsafe_allow_html=True)
+
+# ==============================================================================
+# 16. CENTRAL TABS NAVIGATION (IGNITION AURA)
+# ==============================================================================
+tab_map, tab_arrivals, tab_team, tab_schedule = st.tabs([
     "📍 Venue Map & Wayfinding",
     "👥 Expected Client Arrivals",
     "📇 Team Directory & Alerts",
-    "🗓️ Your Shift Schedule",
-    "🤖 VIO Assistant"
+    "🗓️ Your Shift Schedule"
 ])
 
 # ==============================================================================
@@ -918,120 +1033,4 @@ with act_col2:
         "</div>", unsafe_allow_html=True
     )
 
-# ==============================================================================
-# TAB 5: 🤖 VIO ASSISTANT (MAIN WINDOW ACCESS)
-# ==============================================================================
-with tab_vio:
-    st.subheader("🤖 VIO Assistant")
-    st.markdown("Your intelligent matchday companion — ask about directions, guest protocols, or emergency procedures.")
 
-    # Chat header banner
-    st.markdown("""
-    <div style='background:linear-gradient(135deg, #0A66C2, #00FFCC); padding:1rem 1.4rem;
-                border-radius:12px; display:flex; align-items:center; gap:1rem; margin-bottom:1.2rem;'>
-        <div style='width:52px; height:52px; border-radius:50%; background:rgba(255,255,255,0.15);
-                    display:flex; align-items:center; justify-content:center; font-size:1.6rem;
-                    border:2px solid rgba(255,255,255,0.3);'>🤖</div>
-        <div>
-            <div style='font-size:1.1rem; font-weight:700; color:#FFFFFF;'>VIO — Volunteer Intelligent Operator</div>
-            <div style='font-size:0.8rem; color:rgba(255,255,255,0.85);'>Online • Ask me anything about venue routing, guest handling, or emergency protocols</div>
-        </div>
-    </div>
-    """, unsafe_allow_html=True)
-
-    # Suggested questions grid
-    st.markdown("**💬 Quick Questions — tap any to get instant guidance:**")
-    vq1, vq2, vq3 = st.columns(3)
-    with vq1:
-        if st.button("♿ Spanish Wheelchair Route", use_container_width=True, key="vio_q1"):
-            st.session_state.chat_history.append(("Spanish VIP wheelchair access path", VIO_KNOWLEDGE["spanish vip wheelchair access path"]))
-            st.rerun()
-        if st.button("🚗 German FA Drop-off", use_container_width=True, key="vio_q2"):
-            st.session_state.chat_history.append(("German VIP drop-off", VIO_KNOWLEDGE["german vip drop-off"]))
-            st.rerun()
-    with vq2:
-        if st.button("⚡ Gate B → Suite 4", use_container_width=True, key="vio_q3"):
-            st.session_state.chat_history.append(("Fastest route from Gate B to Executive Box 4", VIO_KNOWLEDGE["fastest route from gate b to executive box 4"]))
-            st.rerun()
-        if st.button("🇯🇵 Tokyo FC Protocol", use_container_width=True, key="vio_q4"):
-            st.session_state.chat_history.append(("Japanese VIP translation", VIO_KNOWLEDGE["japanese vip translation"]))
-            st.rerun()
-    with vq3:
-        if st.button("🚨 Emergency Medical", use_container_width=True, key="vio_q5"):
-            st.session_state.chat_history.append(("Emergency medical route", VIO_KNOWLEDGE["emergency medical route"]))
-            st.rerun()
-        if st.button("🕌 Arabic / Halal Protocol", use_container_width=True, key="vio_q6"):
-            st.session_state.chat_history.append(("Arabic VIP protocol", VIO_KNOWLEDGE["arabic vip protocol"]))
-            st.rerun()
-
-    # Free-text input
-    st.write("")
-    user_q = st.text_input("💬 Type your question here...", key="vio_input", placeholder="e.g. 'How do I escort a wheelchair guest to the Royal Box?'")
-    vio_send_col, vio_clear_col = st.columns([4, 1])
-    with vio_send_col:
-        send_pressed = st.button("Send ➤", type="primary", use_container_width=True, key="vio_send")
-    with vio_clear_col:
-        if st.button("🗑️ Clear", use_container_width=True, key="vio_clear"):
-            st.session_state.chat_history = []
-            st.rerun()
-
-    if send_pressed and user_q:
-        q_clean = user_q.lower()
-        matched = None
-        for key in VIO_KNOWLEDGE:
-            kws = key.split()
-            if key in q_clean or sum(1 for kw in kws if kw in q_clean) >= 2:
-                matched = key
-                break
-        if not matched:
-            if "spanish" in q_clean or "wheelchair" in q_clean: matched = "spanish vip wheelchair access path"
-            elif "gate b" in q_clean or "box 4" in q_clean or "suite 4" in q_clean: matched = "fastest route from gate b to executive box 4"
-            elif "german" in q_clean: matched = "german vip drop-off"
-            elif "japanese" in q_clean or "tokyo" in q_clean: matched = "japanese vip translation"
-            elif "emergency" in q_clean or "medical" in q_clean: matched = "emergency medical route"
-            elif "arabic" in q_clean or "halal" in q_clean: matched = "arabic vip protocol"
-        if matched:
-            st.session_state.chat_history.append((user_q, VIO_KNOWLEDGE[matched]))
-        else:
-            st.session_state.chat_history.append((user_q, {
-                "title": "🔍 No Matching Guide Found",
-                "steps": [
-                    "Your query didn't match any pre-loaded guides.",
-                    "Try keywords like: 'Spanish wheelchair', 'Gate B Suite 4', 'German drop-off', 'Japanese translator', 'emergency medical', 'Arabic halal'.",
-                    "Or contact your Team Lead for live assistance."
-                ]
-            }))
-        st.rerun()
-
-    # Chat history display
-    if st.session_state.chat_history:
-        st.markdown("---")
-        st.markdown("**📜 Conversation History:**")
-        for query, reply in reversed(st.session_state.chat_history):
-            bc = "#FF4B4B" if "No Matching" in reply["title"] else "#00FFCC"
-            st.markdown(f"**You asked:** *\"{query}\"*")
-            st.markdown(f"""
-            <div style='background:#08121E; border-left:4px solid {bc}; padding:1rem; border-radius:0 10px 10px 0; margin-bottom:1rem;'>
-                <div style='margin-top:0; color:#FFFFFF; font-size:1rem; font-weight:600;'>{reply["title"]}</div>
-                <ol style='margin-bottom:0; padding-left:1.2rem; color:#BEC2CA; font-size:0.88rem; margin-top:0.5rem;'>
-                    {"".join(f"<li style='margin-bottom:0.3rem;'>{s}</li>" for s in reply["steps"])}
-                </ol>
-            </div>
-            """, unsafe_allow_html=True)
-
-# ==============================================================================
-# 17. STICKY FLOATING VIO BOT AVATAR (ALWAYS VISIBLE ON SCROLL)
-# ==============================================================================
-st.markdown("""
-<style>
-@keyframes pulse-glow {
-    0%, 100% { box-shadow: 0 6px 20px rgba(0,255,204,0.3); }
-    50% { box-shadow: 0 6px 28px rgba(0,255,204,0.55); }
-}
-</style>
-<div class="vio-float-btn" style="animation: pulse-glow 2s ease-in-out infinite;">🤖</div>
-<div class="vio-speech-bubble">
-    <div style="font-weight:600; color:#FFFFFF; margin-bottom:3px;">VIO is online 💬</div>
-    <div>Need help? Switch to the <b>🤖 VIO Assistant</b> tab above!</div>
-</div>
-""", unsafe_allow_html=True)
