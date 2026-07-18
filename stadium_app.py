@@ -921,16 +921,45 @@ with act_col2:
 # 17. FLOATING VIO AI BOT — TAP TO OPEN CHAT PANEL
 # ==============================================================================
 
-# Show the floating bot bubble only when chat is closed
+# Show the VIO bot avatar card only when chat is closed
 if not st.session_state.show_vio_chat:
-    st.markdown("""
-    <div class="vio-speech-bubble">🤖 Need help with directions or guest protocols?</div>
-    <div class="vio-float-btn">🤖</div>
-    """, unsafe_allow_html=True)
-    st.write("")
-    _vio_spacer, _vio_btn_col = st.columns([5, 1])
-    with _vio_btn_col:
-        if st.button("🤖 Ask VIO", use_container_width=True, key="vio_open_btn"):
+    _bot_spacer, _bot_card_col = st.columns([3, 2])
+    with _bot_card_col:
+        st.markdown("""
+        <div style="display:flex; align-items:flex-end; gap:0.8rem; justify-content:flex-end; margin-top:1rem;">
+            <!-- Speech Bubble -->
+            <div style="background:#122030; border:1px solid #1E3A52; border-radius:14px 14px 0 14px;
+                        padding:0.9rem 1.1rem; max-width:280px; box-shadow:0 4px 15px rgba(0,0,0,0.35);
+                        position:relative;">
+                <div style="font-size:0.88rem; color:#FFFFFF; font-weight:600; margin-bottom:4px;">
+                    Hey there! 👋
+                </div>
+                <div style="font-size:0.82rem; color:#BEC2CA; line-height:1.4;">
+                    Need help with directions or guest protocols? Tap me to chat!
+                </div>
+                <div style="font-size:0.7rem; color:#0A66C2; margin-top:6px; font-weight:600; text-transform:uppercase; letter-spacing:0.5px;">
+                    ● VIO is online
+                </div>
+            </div>
+            <!-- Bot Avatar -->
+            <div style="width:58px; height:58px; border-radius:50%; flex-shrink:0;
+                        background:linear-gradient(135deg, #0A66C2, #00FFCC);
+                        display:flex; align-items:center; justify-content:center;
+                        font-size:1.7rem; box-shadow:0 4px 18px rgba(0,255,204,0.3);
+                        border:2px solid #00FFCC; cursor:pointer;
+                        animation: pulse-glow 2s ease-in-out infinite;">
+                🤖
+            </div>
+        </div>
+        <style>
+        @keyframes pulse-glow {
+            0%, 100% { box-shadow: 0 4px 18px rgba(0,255,204,0.3); }
+            50% { box-shadow: 0 4px 24px rgba(0,255,204,0.55); }
+        }
+        </style>
+        """, unsafe_allow_html=True)
+        st.write("")
+        if st.button("💬 Chat with VIO", use_container_width=True, key="vio_open_btn"):
             st.session_state.show_vio_chat = True
             st.rerun()
 
