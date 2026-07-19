@@ -1,480 +1,1131 @@
 import streamlit as st
-import json
+import plotly.graph_objects as go
+import datetime
 
 # ==============================================================================
-# 1. PAGE SETUP & MINIMALIST IVORY THEME CONFIG
+# 1. PAGE CONFIGURATION
 # ==============================================================================
 st.set_page_config(
-    page_title="LinkedIn Post Generator",
-    page_icon="✍️",
+    page_title="VIO — Volunteer Companion Hub | FIFA 2026",
+    page_icon="🏆",
     layout="wide",
-    initial_sidebar_state="expanded"
+    initial_sidebar_state="collapsed"
 )
 
-# Custom light ivory stylesheet with futuristic typography & pastel highlights
-IVORY_THEME_CSS = """
+# ==============================================================================
+# 2. GLOBAL CUSTOM CSS — DARK THEME, IGNITION AURA, AVATARS, FLOATING BOT
+# ==============================================================================
+CUSTOM_CSS = """
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600&family=Inter:wght@300;400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&family=Syne:wght@600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Space+Grotesk:wght@400;600;700&family=Fira+Code:wght@400;600&display=swap');
 
-/* Base layout styling */
+/* === BASE DARK THEME === */
 html, body, [data-testid="stAppViewContainer"], [data-testid="stHeader"] {
-    background-color: #FAF9F5 !important;
-    color: #2D2D30 !important;
-    font-family: 'Inter', sans-serif !important;
-}
-
-/* Sidebar styling overrides */
-[data-testid="stSidebar"] {
-    background-color: #F3F2EC !important;
-    border-right: 1px solid #E2E1D8 !important;
-}
-[data-testid="stSidebar"] .stMarkdown h1, 
-[data-testid="stSidebar"] .stMarkdown h2, 
-[data-testid="stSidebar"] .stMarkdown h3 {
-    color: #2D2D30 !important;
-    font-family: 'Space Grotesk', sans-serif !important;
-}
-
-/* Streamlit form input controls overrides */
-div[data-baseweb="select"] > div {
-    background-color: #FFFFFF !important;
-    border: 1px solid #E2E1D8 !important;
-    color: #2D2D30 !important;
-    border-radius: 6px !important;
-}
-div[role="listbox"] {
-    background-color: #FFFFFF !important;
-    border: 1px solid #E2E1D8 !important;
-}
-div[role="option"] {
-    color: #2D2D30 !important;
-    background-color: #FFFFFF !important;
-}
-div[role="option"]:hover, div[role="option"][aria-selected="true"] {
-    background-color: #E8DBFD !important;
-    color: #4A1D96 !important;
-}
-.stTextArea textarea {
-    background-color: #FFFFFF !important;
-    color: #2D2D30 !important;
-    border: 1px solid #E2E1D8 !important;
-    border-radius: 6px !important;
-}
-
-/* Primary actions button styling */
-.stButton>button {
-    background-color: #8B5CF6 !important;
+    background-color: #0E1117 !important;
     color: #FFFFFF !important;
-    border: none !important;
-    border-radius: 6px !important;
-    padding: 0.6rem 1.5rem !important;
-    font-family: 'Space Grotesk', sans-serif !important;
+    font-family: 'Outfit', sans-serif !important;
+}
+[data-testid="stSidebar"] {
+    background-color: #08121E !important;
+    border-right: 1px solid #1A2E40 !important;
+}
+h1, h2, h3 { font-family: 'Space Grotesk', sans-serif !important; font-weight: 700; }
+
+/* === IGNITION AURA — Active Tab Glow === */
+button[data-baseweb="tab"] {
+    font-family: 'Outfit', sans-serif !important;
     font-weight: 600 !important;
-    transition: all 0.2s ease !important;
+    font-size: 0.95rem !important;
+    color: #A0C0D0 !important;
+    border-bottom: 3px solid transparent !important;
+    padding: 0.7rem 1.2rem !important;
+    transition: all 0.3s ease !important;
+    background: transparent !important;
 }
-.stButton>button:hover {
-    background-color: #7C3AED !important;
-    box-shadow: 0 4px 14px rgba(139, 92, 246, 0.25) !important;
+button[data-baseweb="tab"]:hover {
+    color: #FFFFFF !important;
+    background: rgba(10, 102, 194, 0.08) !important;
 }
-
-/* Copywriter Headers */
-.engine-header {
-    margin-bottom: 2rem;
-    border-bottom: 1px solid #E2E1D8;
-    padding-bottom: 1.5rem;
+button[data-baseweb="tab"][aria-selected="true"] {
+    color: #FFFFFF !important;
+    border-bottom: 3px solid #0A66C2 !important;
+    background: rgba(10, 102, 194, 0.12) !important;
+    box-shadow: 0 4px 12px rgba(10, 102, 194, 0.2) !important;
 }
-.engine-title {
-    font-family: 'Space Grotesk', sans-serif;
-    font-size: 2.2rem;
-    font-weight: 700;
-    letter-spacing: -0.02em;
-    background: linear-gradient(135deg, #2D2D30 40%, #8B5CF6 100%);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
+div[data-baseweb="tab-highlight"] {
+    background-color: #0A66C2 !important;
 }
-.engine-subtitle {
-    font-size: 0.95rem;
-    color: #7C808C;
-    margin-top: 0.2rem;
+div[data-baseweb="tab-border"] {
+    background-color: #1E3A52 !important;
 }
 
-/* Visual Card Surfaces */
-.ivory-panel {
-    background-color: #FFFFFF;
-    border: 1px solid #E2E1D8;
-    border-radius: 8px;
-    padding: 1.5rem;
-    margin-bottom: 1.5rem;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
+/* === WEATHER STRIP === */
+.weather-strip {
+    background: linear-gradient(90deg, #122030 0%, #0E1117 100%);
+    border: 1px solid #1E3A52;
+    border-radius: 10px;
+    padding: 0.6rem 1.2rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 1rem;
+    font-size: 0.88rem;
+    color: #BEC2CA;
 }
-.ivory-panel-title {
-    font-family: 'Space Grotesk', sans-serif;
-    font-size: 14px;
-    font-weight: 600;
-    color: #2D2D30;
-    margin-bottom: 12px;
-    border-bottom: 1px solid #F3F2EC;
-    padding-bottom: 6px;
-}
+.weather-strip .temp { color: #FFAA00; font-weight: 700; font-size: 1.05rem; }
+.weather-strip .hydrate { color: #00FFCC; font-weight: 600; }
 
-/* Pastel Highlight Containers */
-.pastel-badge {
-    display: inline-block;
-    padding: 2px 8px;
-    font-family: 'Fira Code', monospace;
-    font-size: 10px;
-    border-radius: 4px;
-    font-weight: 500;
-}
-.badge-lavender {
-    background-color: #F3E8FF;
-    color: #6B21A8;
-    border: 1px solid #D8B4FE;
-}
-.badge-mint {
-    background-color: #ECFDF5;
-    color: #065F46;
-    border: 1px solid #A7F3D0;
-}
-.badge-sky {
-    background-color: #E0F2FE;
-    color: #075985;
-    border: 1px solid #BAE6FD;
-}
-.badge-rose {
-    background-color: #FFF1F2;
-    color: #9F1239;
-    border: 1px solid #FECDD3;
-}
-
-/* Metric card widgets */
-.metric-layout-grid {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 16px;
-    margin-bottom: 1.5rem;
-}
-.metric-stat-card {
-    padding: 1.2rem;
-    border-radius: 8px;
+/* === METRIC CARDS === */
+.metric-container { display: flex; gap: 1rem; margin-bottom: 1.5rem; }
+.metric-card {
+    flex: 1;
+    background-color: #122030;
+    border: 1px solid #1E3A52;
+    border-radius: 12px;
+    padding: 1.1rem;
     text-align: center;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.35);
+    transition: all 0.3s ease;
+    position: relative;
+}
+.metric-card:hover { border-color: #00FFCC; transform: translateY(-2px); }
+.metric-card:hover .card-tooltip { opacity: 1; visibility: visible; transform: translateY(0); }
+.metric-title { font-size: 0.78rem; color: #A0C0D0; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; }
+.metric-val { font-size: 1.7rem; color: #FFFFFF; font-weight: 700; margin: 0.3rem 0; font-family: 'Space Grotesk', sans-serif; }
+.metric-desc { font-size: 0.72rem; color: #00FFCC; font-weight: 500; }
+.metric-desc.urgent { color: #FF4B4B; }
+
+/* === METRIC CARD HOVER TOOLTIP === */
+.card-tooltip {
+    position: absolute;
+    bottom: calc(100% + 10px);
+    left: 50%;
+    transform: translateX(-50%) translateY(6px);
+    background-color: #0A1020;
+    border: 1px solid #1E3A52;
+    border-radius: 10px;
+    padding: 0.75rem 1rem;
+    min-width: 220px;
+    max-width: 300px;
+    z-index: 1000;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.25s ease;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+    text-align: left;
+    font-size: 0.8rem;
+    color: #BEC2CA;
+    line-height: 1.5;
+}
+.card-tooltip::after {
+    content: '';
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    border: 6px solid transparent;
+    border-top-color: #1E3A52;
+}
+.card-tooltip .tip-title {
+    font-weight: 700;
+    color: #FFFFFF;
+    font-size: 0.82rem;
+    margin-bottom: 4px;
+}
+.card-tooltip.urgent-tip {
+    border-color: #FF4B4B;
+}
+.card-tooltip.urgent-tip::after {
+    border-top-color: #FF4B4B;
 }
 
-/* Preformatted Copy Viewport */
-.copy-viewport {
-    background-color: #FAF9F5;
-    border: 1px dashed #E2E1D8;
-    border-radius: 6px;
-    padding: 1.25rem;
-    font-family: 'Inter', sans-serif;
-    font-size: 13px;
-    color: #2D2D30;
-    line-height: 1.6;
-    white-space: pre-wrap;
-    margin-bottom: 12px;
+/* === PROFILE BADGE === */
+.profile-badge {
+    background-color: #122030;
+    border: 1px solid #1E3A52;
+    border-radius: 12px;
+    padding: 0.8rem 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.7rem;
 }
+.profile-badge .avatar-circle {
+    width: 42px; height: 42px; border-radius: 50%;
+    background: linear-gradient(135deg, #0A66C2, #00FFCC);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.1rem; font-weight: 700; color: #FFFFFF;
+    flex-shrink: 0;
+}
+.profile-badge .badge-name { font-size: 0.95rem; font-weight: 600; color: #FFFFFF; }
+.profile-badge .badge-role { font-size: 0.72rem; color: #A0C0D0; }
+
+/* === PROFILE CARDS === */
+.profile-card {
+    background-color: #122030;
+    border: 1px solid #1E3A52;
+    border-radius: 12px;
+    padding: 1.15rem;
+    margin-bottom: 1rem;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+    border-top: 4px solid #00FFCC;
+    transition: transform 0.2s ease;
+}
+.profile-card:hover { transform: scale(1.01); }
+.profile-header { display: flex; align-items: center; gap: 0.8rem; margin-bottom: 0.7rem; }
+.profile-name { font-size: 1.1rem; font-weight: 600; color: #FFFFFF; }
+.profile-role-badge { font-size: 0.68rem; font-weight: 600; background-color: #0F4C81; color: #FFFFFF; padding: 0.2rem 0.5rem; border-radius: 4px; text-transform: uppercase; }
+.profile-info { font-size: 0.83rem; color: #BEC2CA; margin-bottom: 0.35rem; }
+.profile-label { font-weight: 500; color: #8E929A; }
+
+/* === STATUS BADGES === */
+.badge { display: inline-block; padding: 0.25rem 0.6rem; font-size: 0.73rem; font-weight: 600; border-radius: 6px; text-transform: uppercase; }
+.badge-urgent { background-color: rgba(255,75,75,0.15); color: #FF4B4B; border: 1px solid #FF4B4B; }
+.badge-warning { background-color: rgba(255,170,0,0.15); color: #FFAA00; border: 1px solid #FFAA00; }
+.badge-nominal { background-color: rgba(0,255,204,0.15); color: #00FFCC; border: 1px solid #00FFCC; }
+
+/* === ACTIVITY FEED TERMINAL === */
+.activity-feed {
+    background-color: #050E17;
+    border: 1px solid #1E3A52;
+    border-radius: 8px;
+    padding: 1rem;
+    font-family: 'Fira Code', monospace;
+    font-size: 0.78rem;
+    max-height: 220px;
+    overflow-y: auto;
+    color: #00FFCC;
+    box-shadow: inset 0 2px 8px rgba(0,0,0,0.8);
+}
+.feed-entry { margin-bottom: 0.35rem; line-height: 1.3; }
+
+/* === SHIFT SCHEDULE TIMELINE === */
+.schedule-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 1rem;
+    padding: 0.9rem 1rem;
+    margin-bottom: 0.6rem;
+    border-radius: 10px;
+    border-left: 4px solid #1E3A52;
+    background-color: #122030;
+    transition: all 0.2s ease;
+}
+.schedule-item.completed { border-left-color: #00FFCC; opacity: 0.65; }
+.schedule-item.current { border-left-color: #0A66C2; background-color: #0F1E35; box-shadow: 0 0 12px rgba(10,102,194,0.2); }
+.schedule-item.upcoming { border-left-color: #1E3A52; }
+.schedule-time { font-family: 'Fira Code', monospace; font-size: 0.85rem; color: #FFAA00; font-weight: 600; min-width: 50px; }
+.schedule-desc { font-size: 0.9rem; color: #FFFFFF; font-weight: 500; }
+.schedule-status { font-size: 0.7rem; text-transform: uppercase; font-weight: 600; margin-top: 2px; }
+.schedule-status.done { color: #00FFCC; }
+.schedule-status.active { color: #0A66C2; }
+.schedule-status.pending { color: #8E929A; }
+
+/* === VIO ASSISTANT BUTTON === */
+.vio-launch-btn {
+    background: linear-gradient(135deg, #0A66C2, #00FFCC);
+    border-radius: 12px;
+    padding: 0.8rem 1.2rem;
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    border: 1px solid #00FFCC;
+    box-shadow: 0 4px 15px rgba(0,255,204,0.2);
+    margin-bottom: 1rem;
+}
+.vio-launch-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 22px rgba(0,255,204,0.35);
+}
+.vio-chat-window {
+    background-color: #0A1020;
+    border: 1px solid #1E3A52;
+    border-radius: 14px;
+    padding: 0;
+    margin-bottom: 1.5rem;
+    box-shadow: 0 8px 30px rgba(0,0,0,0.4);
+    overflow: hidden;
+}
+
+/* === ONBOARDING CARD === */
+.onboard-card {
+    max-width: 580px;
+    margin: 2rem auto;
+    background-color: #122030;
+    border: 1px solid #1E3A52;
+    border-radius: 16px;
+    padding: 2.5rem;
+    box-shadow: 0 8px 30px rgba(0,0,0,0.4);
+    border-top: 4px solid #0A66C2;
+}
+
+/* === SCROLLBAR === */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: #0E1117; }
+::-webkit-scrollbar-thumb { background: #122030; border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: #00FFCC; }
 </style>
 """
-st.markdown(IVORY_THEME_CSS, unsafe_allow_html=True)
+st.markdown(CUSTOM_CSS, unsafe_allow_html=True)
 
 # ==============================================================================
-# 2. STATE MANAGEMENT & SESSION SYSTEM
+# 3. VIO AI KNOWLEDGE BASE
 # ==============================================================================
-valid_archetypes = ["The Failure-to-Success Journey", "The Unpopular Opinion", "The Tactical Playbook"]
-if 'archetype' not in st.session_state or st.session_state.archetype not in valid_archetypes:
-    st.session_state.archetype = "The Failure-to-Success Journey"
-
-
-if 'user_notes' not in st.session_state:
-    st.session_state.user_notes = "I spent 3 years trying to build micro-saas tools. Most of them failed to gain users because I focused entirely on design instead of distribution. Finally pivoted to local client services, launched in 2 weeks, and earned $12k in monthly recurring revenue."
-
-if 'transformed_output' not in st.session_state:
-    st.session_state.transformed_output = ""
-
-if 'hooks' not in st.session_state:
-    st.session_state.hooks = []
-
-if 'ctas' not in st.session_state:
-    st.session_state.ctas = []
-
-if 'metrics' not in st.session_state:
-    st.session_state.metrics = {
-        "characters": 0,
-        "words": 0,
-        "runtime_seconds": 0,
-        "readability_score": 0.0,
-        "readability_label": "Uncalculated"
-    }
-
-# ==============================================================================
-# 3. TEXT TRANSFORMATION ENGINE METRICS & TEMPLATES
-# ==============================================================================
-# Templates definitions mapping dropdown selections
-templates = {
-    "The Failure-to-Success Journey": {
-        "template": """🚀 I wasted years before figuring this out.
-
-Here is the raw truth about what I learned:
-
-{UserContext}
-
-Here is how you can skip my mistakes:
-1. THE MYTH: Build it and they will come.
-2. THE PIVOT: Speed-to-market beats aesthetic perfection every single time.
-3. THE OUTCOME: Focus on direct feedback loops and build distribution first.
-
-Save this list before starting your next iteration loop.""",
-        "hooks": [
-            "I spent 36 months failing at this so you can learn it in 30 seconds.",
-            "The hardest pill to swallow: perfectionism is just masked fear.",
-            "If your project takes more than 3 weeks to launch, you are building the wrong thing."
+VIO_KNOWLEDGE = {
+    "spanish vip wheelchair access path": {
+        "title": "♿ Spanish Guest Wheelchair Route (Gate C → Royal Box)",
+        "steps": [
+            "Verify that Gate C ramp access is completely clear of media gear.",
+            "Greet the guest party at Gate C Lobby (Volunteer Maria Delgado speaks fluent Spanish).",
+            "Guide through VIP Security Lane 3 (wider clearance for wheelchair passage).",
+            "Proceed directly to VIP Elevator West. Secure access to Level 2.",
+            "Exit elevator, turn left into VIP Secured Corridor (do not enter the public concourse).",
+            "Proceed up the East VIP Corridor Ramp directly into the Royal Box."
         ],
-        "ctas": [
-            "💬 What was your biggest design project failure? Let's discuss in the comments.",
-            "🔄 Repost this to save another developer from wasting months."
-        ]
+        "tags": ["Spain", "Wheelchair", "Gate C", "Royal Box"]
     },
-    "The Unpopular Opinion": {
-        "template": """💡 Unpopular opinion: Most creators are doing this completely backwards.
-
-The mainstream advice is setting you up for failure:
-
-{UserContext}
-
-Stop trying to follow standard manuals.
-- Standard guidelines keep your layouts generic.
-- Real progress comes from high-impact asymmetric focus.
-- Validate the value first, optimize layout code second.
-
-Do you agree or disagree with this workflow?""",
-        "hooks": [
-            "Most design playbooks are written for massive teams, not solo builders.",
-            "Why polishing code syntax is the absolute worst way to start an application.",
-            "Quiet distribution beats visual perfection every single week."
+    "fastest route from gate b to executive box 4": {
+        "title": "⚡ Fastest Route: Gate B → Executive Box 4",
+        "steps": [
+            "Receive guests at Gate B Ground Reception.",
+            "Fast-track through VIP Security Lane 2.",
+            "Take VIP Escalator 'Bravo' (east side of lobby) straight to Level 3.",
+            "Turn right at Level 3 corridor, walk past VIP Lounge 1 entry.",
+            "Continue down the executive suite corridor for 50 meters.",
+            "Executive Box 4 is on the left side (suite steward holds access credentials)."
         ],
-        "ctas": [
-            "💬 Agree or disagree? Let me know your thoughts below.",
-            "📥 Bookmark this guideline for your next retrospective meeting."
-        ]
+        "tags": ["Gate B", "Suite 4", "Level 3", "Route"]
     },
-    "The Tactical Playbook": {
-        "template": """🛠️ Stop searching for shortcuts. Here is the step-by-step tactical playbook:
-
-The blueprint logic behind this process:
-
-{UserContext}
-
-Here is the exact checklist to execute:
-- PHASE 1: Audit and list baseline bottlenecks.
-- PHASE 2: Strip non-essential code buffers.
-- PHASE 3: Design a clean layout interface matching active states.
-- PHASE 4: Gather feedback, commit variables, and push to main.
-
-Bookmark this guide. You'll need it when you execute:""",
-        "hooks": [
-            "The exact 4-phase playbook I use to validate and ship layouts.",
-            "Stop guessing what works. Use this checklist on your next project.",
-            "A repeatable framework to move from raw notes to deployable specs."
+    "german vip drop-off": {
+        "title": "🚗 German FA Guest Drop-off & Lounge 1 Path",
+        "steps": [
+            "Instruct driver to enter VIP Access Lane North-West (Gate Code: NW-DE-2026).",
+            "Drop off guests at Gate B Lounge Entry. (Samantha Green is designated host).",
+            "Check accreditation badges at VIP Reception Desk 1.",
+            "Board VIP Elevator 2 (North Lobby) to Level 1.",
+            "Turn left, proceed down VIP hallway past the Historical Trophy gallery.",
+            "Lounge 1 is located directly at the end of the secure hallway."
         ],
-        "ctas": [
-            "📌 Save this post so it's handy when you run your next Git sync.",
-            "💬 Which phase are you currently stuck on? Let's break it down."
-        ]
+        "tags": ["German", "Gate B", "Lounge 1", "Drop-off"]
+    },
+    "japanese vip translation": {
+        "title": "🇯🇵 Tokyo FC / Japanese Guest Protocol",
+        "steps": [
+            "Meet Tokyo FC delegation at Gate A Transport Hub (Primary Lead: Mr. Tanaka).",
+            "Ensure volunteer Kenji Sato is positioned at Gate A (bilingual liaison).",
+            "Fast-track delegation through VIP Customs Clearance Box 4.",
+            "Guide delegation to Executive Suite 4 via Level 3 North Corridor.",
+            "Confirm Japanese translated stadium brochures and tablet maps are loaded in Suite 4."
+        ],
+        "tags": ["Tokyo FC", "Japanese", "Gate A", "Suite 4", "Translation"]
+    },
+    "emergency medical route": {
+        "title": "🚨 Emergency Evacuation: VIP Area → Ambulance Bay",
+        "steps": [
+            "Contact Central Command (Sarah Connor) & Medical Dispatch immediately on Radio Channel 1.",
+            "Clear VIP Service Elevator 3 using the Emergency Lock Key.",
+            "Evacuate patient from Level 2/3 via secure Rear corridor 1B.",
+            "Exit building structure at Ground Floor Gate 4 (Ambulance standby zone).",
+            "Verify Security keeps path clear of VIP spectators and press."
+        ],
+        "tags": ["Emergency", "Medical", "Ambulance", "Gate 4"]
+    },
+    "arabic vip protocol": {
+        "title": "🕌 Arabic Guest & Halal Dining Protocol",
+        "steps": [
+            "Verify with Catering Lead that VIP Lounge 1 Halal-certified menu is active.",
+            "Ensure no alcoholic beverages are placed on the main table unless explicitly requested.",
+            "Quiet room / Prayer Room is open on Level 2, Room 204 (labeled 'Quiet Room').",
+            "Greet guests with traditional formal Arabic respect (hand on heart, head bow).",
+            "If any special protocol questions arise, contact Team Lead Ahmed Al-Masri."
+        ],
+        "tags": ["Arabic", "Halal", "Lounge 1", "Prayer"]
     }
 }
 
-# Core function to execute text transformation and recalculate metrics reactively
-def transform_content():
-    raw_notes = st.session_state.user_notes.strip()
-    
-    # Pre-select matching archetype data
-    active_archetype = st.session_state.archetype
-    archetype_data = templates[active_archetype]
-    
-    # Default placeholder text if user notes are empty
-    if not raw_notes:
-        raw_notes = "[Please insert raw notes context in the sidebar input box]"
-        
-    # Inject context into template
-    transformed = archetype_data["template"].format(UserContext=raw_notes)
-    
-    st.session_state.transformed_output = transformed
-    st.session_state.hooks = archetype_data["hooks"]
-    st.session_state.ctas = archetype_data["ctas"]
-    
-    # Calculate word and character metrics
-    word_count = len(transformed.split())
-    char_count = len(transformed)
-    
-    # Reading Speed Estimate: Average adult reads ~220 WPM
-    runtime_seconds = max(1, int((word_count / 220) * 60))
-    
-    # Robust readability calculator approximation (Flesch Reading Ease style)
-    sentences_count = max(1, transformed.count('.') + transformed.count('!') + transformed.count('?'))
-    syllables_count = int(char_count / 4.7)  # Typical syllable multiplier
-    
-    # Calculate Flesch Reading Ease score
-    readability = 206.835 - 1.015 * (word_count / sentences_count) - 84.6 * (syllables_count / word_count)
-    readability = max(0.0, min(100.0, readability))
-    
-    # Mapped readability label classification
-    if readability >= 90:
-        label = "Very Easy (5th Grade level)"
-    elif readability >= 70:
-        label = "Easy Conversational"
-    elif readability >= 50:
-        label = "Standard / Moderate"
-    elif readability >= 30:
-        label = "Difficult (Academic)"
+# ==============================================================================
+# 4. MATCHDAY SIMULATION DATA
+# ==============================================================================
+VIP_SIMULATION_STEPS = {
+    0: [
+        {"name": "Spain Royal Escort", "affiliation": "Spanish Royal Family", "status": "Urgent Alert", "location_desc": "Approaching Gate C (Vehicle Delay)", "transit_mode": "Private Escort", "eta": "17:45", "language": "Spanish", "target": "Royal Box", "gate": "Gate C", "mandates": "Wheelchair access, high security", "x": 8.0, "y": 2.5, "zone": "Outside"},
+        {"name": "German FA President", "affiliation": "DFB Delegation", "status": "Nominal", "location_desc": "En Route (Highway 1)", "transit_mode": "VIP Shuttle", "eta": "18:30", "language": "German", "target": "VIP Lounge 1", "gate": "Gate B", "mandates": "Halal catering request", "x": 5.0, "y": 1.2, "zone": "Outside"},
+        {"name": "Tokyo FC Board", "affiliation": "Tokyo FC Board", "status": "Warning", "location_desc": "Clearing Customs (Language barrier)", "transit_mode": "Charter Bus", "eta": "18:15", "language": "Japanese", "target": "Executive Suite 4", "gate": "Gate A", "mandates": "Needs Japanese translator", "x": 1.8, "y": 3.0, "zone": "Outside"},
+        {"name": "FIFA Executive VIPs", "affiliation": "FIFA Committee", "status": "Nominal", "location_desc": "Settled at VIP Lounge 2", "transit_mode": "Official Car", "eta": "16:45", "language": "French", "target": "VIP Lounge 2", "gate": "Gate B", "mandates": "Standard accreditations", "x": 7.7, "y": 7.1, "zone": "Inside"},
+        {"name": "Ronaldo & Party", "affiliation": "Brazilian Legend", "status": "Nominal", "location_desc": "Settled at Royal Box", "transit_mode": "Helicopter", "eta": "16:15", "language": "Portuguese", "target": "Royal Box", "gate": "Helipad", "mandates": "Autograph area protection", "x": 5.0, "y": 7.85, "zone": "Inside"}
+    ],
+    1: [
+        {"name": "Spain Royal Escort", "affiliation": "Spanish Royal Family", "status": "Urgent Alert", "location_desc": "At Gate C (Lobby Check-In)", "transit_mode": "Private Escort", "eta": "17:45", "language": "Spanish", "target": "Royal Box", "gate": "Gate C", "mandates": "Wheelchair access, high security", "x": 8.0, "y": 7.5, "zone": "Outside"},
+        {"name": "German FA President", "affiliation": "DFB Delegation", "status": "Nominal", "location_desc": "Approaching Gate B Drop-off", "transit_mode": "VIP Shuttle", "eta": "18:25", "language": "German", "target": "VIP Lounge 1", "gate": "Gate B", "mandates": "Halal catering request", "x": 5.0, "y": 4.5, "zone": "Outside"},
+        {"name": "Tokyo FC Board", "affiliation": "Tokyo FC Board", "status": "Warning", "location_desc": "Approaching Gate A Hub", "transit_mode": "Charter Bus", "eta": "18:15", "language": "Japanese", "target": "Executive Suite 4", "gate": "Gate A", "mandates": "Needs Japanese translator", "x": 2.0, "y": 6.0, "zone": "Outside"},
+        {"name": "FIFA Executive VIPs", "affiliation": "FIFA Committee", "status": "Nominal", "location_desc": "Settled at VIP Lounge 2", "transit_mode": "Official Car", "eta": "16:45", "language": "French", "target": "VIP Lounge 2", "gate": "Gate B", "mandates": "Standard accreditations", "x": 7.7, "y": 7.1, "zone": "Inside"},
+        {"name": "Ronaldo & Party", "affiliation": "Brazilian Legend", "status": "Nominal", "location_desc": "Settled at Royal Box", "transit_mode": "Helicopter", "eta": "16:15", "language": "Portuguese", "target": "Royal Box", "gate": "Helipad", "mandates": "Autograph area protection", "x": 5.0, "y": 7.85, "zone": "Inside"}
+    ],
+    2: [
+        {"name": "Spain Royal Escort", "affiliation": "Spanish Royal Family", "status": "Nominal", "location_desc": "Escorted to Royal Box", "transit_mode": "Private Escort", "eta": "17:45", "language": "Spanish", "target": "Royal Box", "gate": "Gate C", "mandates": "Wheelchair access, high security", "x": 5.0, "y": 7.85, "zone": "Inside"},
+        {"name": "German FA President", "affiliation": "DFB Delegation", "status": "Nominal", "location_desc": "At Gate B (Receiving Guest)", "transit_mode": "VIP Shuttle", "eta": "18:25", "language": "German", "target": "VIP Lounge 1", "gate": "Gate B", "mandates": "Halal catering request", "x": 5.0, "y": 7.5, "zone": "Outside"},
+        {"name": "Tokyo FC Board", "affiliation": "Tokyo FC Board", "status": "Nominal", "location_desc": "At Gate A (Met by Translator)", "transit_mode": "Charter Bus", "eta": "18:15", "language": "Japanese", "target": "Executive Suite 4", "gate": "Gate A", "mandates": "Needs Japanese translator", "x": 2.0, "y": 7.5, "zone": "Outside"},
+        {"name": "FIFA Executive VIPs", "affiliation": "FIFA Committee", "status": "Nominal", "location_desc": "Settled at VIP Lounge 2", "transit_mode": "Official Car", "eta": "16:45", "language": "French", "target": "VIP Lounge 2", "gate": "Gate B", "mandates": "Standard accreditations", "x": 7.7, "y": 7.1, "zone": "Inside"},
+        {"name": "Ronaldo & Party", "affiliation": "Brazilian Legend", "status": "Nominal", "location_desc": "Settled at Royal Box", "transit_mode": "Helicopter", "eta": "16:15", "language": "Portuguese", "target": "Royal Box", "gate": "Helipad", "mandates": "Autograph area protection", "x": 5.0, "y": 7.85, "zone": "Inside"}
+    ],
+    3: [
+        {"name": "Spain Royal Escort", "affiliation": "Spanish Royal Family", "status": "Nominal", "location_desc": "Settled at Royal Box", "transit_mode": "Private Escort", "eta": "17:45", "language": "Spanish", "target": "Royal Box", "gate": "Gate C", "mandates": "Wheelchair access, high security", "x": 5.0, "y": 7.85, "zone": "Inside"},
+        {"name": "German FA President", "affiliation": "DFB Delegation", "status": "Nominal", "location_desc": "Settled at VIP Lounge 1", "transit_mode": "VIP Shuttle", "eta": "18:25", "language": "German", "target": "VIP Lounge 1", "gate": "Gate B", "mandates": "Halal catering request", "x": 2.3, "y": 7.1, "zone": "Inside"},
+        {"name": "Tokyo FC Board", "affiliation": "Tokyo FC Board", "status": "Nominal", "location_desc": "Settled at Executive Suite 4", "transit_mode": "Charter Bus", "eta": "18:15", "language": "Japanese", "target": "Executive Suite 4", "gate": "Gate A", "mandates": "Needs Japanese translator", "x": 2.5, "y": 2.3, "zone": "Inside"},
+        {"name": "FIFA Executive VIPs", "affiliation": "FIFA Committee", "status": "Nominal", "location_desc": "Settled at VIP Lounge 2", "transit_mode": "Official Car", "eta": "16:45", "language": "French", "target": "VIP Lounge 2", "gate": "Gate B", "mandates": "Standard accreditations", "x": 7.7, "y": 7.1, "zone": "Inside"},
+        {"name": "Ronaldo & Party", "affiliation": "Brazilian Legend", "status": "Nominal", "location_desc": "Settled at Royal Box", "transit_mode": "Helicopter", "eta": "16:15", "language": "Portuguese", "target": "Royal Box", "gate": "Helipad", "mandates": "Autograph area protection", "x": 5.0, "y": 7.85, "zone": "Inside"}
+    ]
+}
+
+TIMELINE_LABELS = {
+    0: "17:00 — Pre-Match Guest Reception",
+    1: "17:30 — Gates Open, Active Arrivals",
+    2: "18:00 — Peak Guest Check-In Window",
+    3: "18:30 — Kick-off Approaching"
+}
+
+# ==============================================================================
+# 5. SHIFT SCHEDULE DATA (PER TIMELINE PHASE)
+# ==============================================================================
+SHIFT_SCHEDULE = [
+    {"time": "15:00", "desc": "Report to your assigned zone and check in with your Team Lead", "phase_complete": 0},
+    {"time": "15:30", "desc": "Collect your radio, lanyard badge, and venue map tablet", "phase_complete": 0},
+    {"time": "16:00", "desc": "Attend the pre-match volunteer briefing at Command Center", "phase_complete": 0},
+    {"time": "16:30", "desc": "Security sweep of VIP corridors — confirm all-clear", "phase_complete": 0},
+    {"time": "17:00", "desc": "Gates open — stand by at your assigned entry point", "phase_complete": 1},
+    {"time": "17:15", "desc": "First VIP guest arrivals expected — prepare welcome kits", "phase_complete": 1},
+    {"time": "17:30", "desc": "Coordinate with Translation Liaisons for language-sensitive arrivals", "phase_complete": 1},
+    {"time": "17:45", "desc": "Peak arrival window begins — all hands active", "phase_complete": 2},
+    {"time": "18:00", "desc": "Confirm all priority guests are seated in their designated areas", "phase_complete": 2},
+    {"time": "18:15", "desc": "Final corridor sweep — clear public areas for kick-off", "phase_complete": 3},
+    {"time": "18:25", "desc": "Final security check complete — lock VIP access elevators", "phase_complete": 3},
+    {"time": "18:30", "desc": "Kick-off! Transition to in-match standby mode", "phase_complete": 3},
+]
+
+# ==============================================================================
+# 6. WAYFINDING COORDINATE MAP (FOR ROUTE DRAWING)
+# ==============================================================================
+LOCATION_COORDS_OUTSIDE = {
+    "Gate A": (2.0, 7.5),
+    "Gate B": (5.0, 7.5),
+    "Gate C": (8.0, 7.5),
+    "Transport Hub": (1.6, 2.4),
+    "VIP Helipad": (8.0, 1.8),
+    "VIP Drop-Off": (5.0, 5.0),
+}
+LOCATION_COORDS_INSIDE = {
+    "VIP Lounge 1": (2.3, 7.1),
+    "VIP Lounge 2": (7.7, 7.1),
+    "Royal Box": (5.0, 7.85),
+    "Executive Suites 1-5": (2.5, 2.3),
+    "Executive Suites 6-10": (7.5, 2.3),
+    "Pitch Centre": (5.0, 5.0),
+}
+
+# ==============================================================================
+# 7. AVATAR SVG GENERATOR
+# ==============================================================================
+AVATAR_STYLES = {
+    "Central Command Director": {"bg": "#071D49", "hair": "#A0C0D0", "uniform": "#0A66C2"},
+    "Team Lead": {"bg": "#0E2333", "hair": "#FFAA00", "uniform": "#00FFCC"},
+    "Liaison Officer": {"bg": "#2A1520", "hair": "#FF6B8A", "uniform": "#FF6B8A"},
+    "Bilingual Escort": {"bg": "#0E2820", "hair": "#00FFCC", "uniform": "#2ECC71"},
+    "Transit Coordinator": {"bg": "#2A1E0E", "hair": "#FFAA00", "uniform": "#FF8C00"},
+    "Royal Box Host": {"bg": "#2A2215", "hair": "#FFD700", "uniform": "#FFD700"},
+}
+
+def make_avatar_svg(name, role):
+    style = AVATAR_STYLES.get(role, {"bg": "#122030", "hair": "#A0C0D0", "uniform": "#0A66C2"})
+    initials = "".join([w[0].upper() for w in name.split()[:2]])
+    return f"""<svg width="44" height="44" viewBox="0 0 44 44" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="22" cy="22" r="22" fill="{style['bg']}"/>
+        <circle cx="22" cy="16" r="8" fill="{style['hair']}"/>
+        <circle cx="22" cy="16" r="7" fill="#D4A574"/>
+        <ellipse cx="22" cy="36" rx="13" ry="10" fill="{style['uniform']}"/>
+        <text x="22" y="40" text-anchor="middle" fill="#FFFFFF" font-size="8" font-family="Outfit" font-weight="700">{initials}</text>
+    </svg>"""
+
+# ==============================================================================
+# 8. INITIALIZE SESSION STATE
+# ==============================================================================
+if "app_init" not in st.session_state:
+    st.session_state.onboarded = False
+    st.session_state.volunteer_profile = {}
+    st.session_state.timeline_phase = 0
+    st.session_state.vips = VIP_SIMULATION_STEPS[0]
+    st.session_state.directory = [
+        {"name": "Sarah Connor", "role": "Central Command Director", "zone": "Command Center", "languages": "English, French", "status": "Active", "beep_count": 0, "id": "sarah"},
+        {"name": "Ahmed Al-Masri", "role": "Team Lead", "zone": "VIP Lounges", "languages": "English, Arabic", "status": "Active", "beep_count": 0, "id": "ahmed"},
+        {"name": "Maria Delgado", "role": "Liaison Officer", "zone": "Gate C VIP Reception", "languages": "Spanish, English", "status": "Active", "beep_count": 0, "id": "maria"},
+        {"name": "Kenji Sato", "role": "Bilingual Escort", "zone": "Gate A Logistics", "languages": "Japanese, English", "status": "Active", "beep_count": 0, "id": "kenji"},
+        {"name": "Jean-Pierre", "role": "Transit Coordinator", "zone": "Transport Hub", "languages": "French, English", "status": "Active", "beep_count": 0, "id": "jean"},
+        {"name": "Samantha Green", "role": "Royal Box Host", "zone": "Royal Box Corridor", "languages": "English, German", "status": "Active", "beep_count": 0, "id": "samantha"}
+    ]
+    st.session_state.activity_feed = [
+        f"[{datetime.datetime.now().strftime('%H:%M:%S')}] System online — VIO Companion Hub is ready."
+    ]
+    st.session_state.chat_history = []
+    st.session_state.selected_contingency = None
+    st.session_state.show_vio_chat = False
+    st.session_state.app_init = True
+
+# ==============================================================================
+# 9. HELPER FUNCTIONS
+# ==============================================================================
+def update_timeline():
+    phase = st.session_state.timeline_phase
+    st.session_state.vips = VIP_SIMULATION_STEPS[phase]
+    t = datetime.datetime.now().strftime('%H:%M:%S')
+    st.session_state.activity_feed.append(
+        f"[{t}] Timeline updated to Phase {phase} — {TIMELINE_LABELS[phase]}"
+    )
+
+def advance_timeline():
+    if st.session_state.timeline_phase < 3:
+        st.session_state.timeline_phase += 1
+        update_timeline()
     else:
-        label = "Very Confusing / Technical"
-        
-    st.session_state.metrics = {
-        "characters": char_count,
-        "words": word_count,
-        "runtime_seconds": runtime_seconds,
-        "readability_score": round(readability, 1),
-        "readability_label": label
-    }
+        st.toast("You're at the final matchday phase.", icon="ℹ️")
+
+def reset_timeline():
+    st.session_state.timeline_phase = 0
+    update_timeline()
+    st.toast("Timeline reset to Phase 0.", icon="🔄")
+
+def send_alert(person_id, name, zone):
+    for p in st.session_state.directory:
+        if p["id"] == person_id:
+            p["beep_count"] += 1
+            break
+    t = datetime.datetime.now().strftime('%H:%M:%S')
+    st.session_state.activity_feed.append(f"[{t}] Quick Alert sent to {name} (Zone: {zone})")
+    st.toast(f"✅ Alert sent to {name}!", icon="📢")
 
 # ==============================================================================
-# 4. MAIN PANEL NAVIGATION & DISPLAY
+# 10. ONBOARDING GATE — COMPULSORY VOLUNTEER REGISTRATION
 # ==============================================================================
-# Sidebar parameters
-st.sidebar.write("### 🎛️ Engine Configuration")
+if not st.session_state.onboarded:
+    st.markdown("""
+    <div style="text-align:center; margin-top: 2rem;">
+        <h1 style="font-size: 2.5rem; margin-bottom: 0;">🏆 2026 FIFA World Cup</h1>
+        <h2 style="color: #00FFCC; font-weight: 600; margin-top: 4px;">Volunteer Companion Hub</h2>
+    </div>
+    """, unsafe_allow_html=True)
 
-selected_archetype = st.sidebar.selectbox(
-    "Select Copy Archetype",
-    valid_archetypes,
-    index=valid_archetypes.index(st.session_state.archetype),
-    key="selected_archetype"
-)
-st.session_state.archetype = selected_archetype
+    st.markdown("<div class='onboard-card'>", unsafe_allow_html=True)
+    st.markdown("#### 🔐 Volunteer Credential Registration")
+    st.markdown("Welcome! Please register your details below to access your personalised matchday dashboard.")
+    st.write("")
 
-user_notes_input = st.sidebar.text_area(
-    "Insert Raw Context Notes",
-    value=st.session_state.user_notes,
-    height=200,
-    key="notes_input"
-)
-st.session_state.user_notes = user_notes_input
+    ob_name = st.text_input("Full Name", placeholder="e.g. Alex Johnson")
+    ob_role = st.selectbox("Active Role", [
+        "Guest Relations Specialist",
+        "Logistics Lead",
+        "VIP Escort Coordinator",
+        "Accessibility Officer",
+        "Translation Liaison"
+    ])
+    ob_langs = st.multiselect("Language Proficiency", [
+        "English", "Spanish", "French", "German", "Japanese", "Arabic", "Portuguese"
+    ], default=["English"])
+    ob_zone = st.selectbox("Assigned Stadium Zone", [
+        "Gate A", "Gate B", "Gate C",
+        "VIP Lounges", "Royal Box Corridor",
+        "Transport Hub", "Command Center"
+    ])
 
-# Transform Action Button inside sidebar
-if st.sidebar.button("Transform Content", use_container_width=True):
-    transform_content()
+    st.write("")
+    if st.button("✅  Begin My Shift", type="primary", use_container_width=True):
+        if ob_name.strip():
+            st.session_state.volunteer_profile = {
+                "full_name": ob_name.strip(),
+                "active_role": ob_role,
+                "language_proficiency": ", ".join(ob_langs),
+                "assigned_zone": ob_zone
+            }
+            st.session_state.onboarded = True
+            t = datetime.datetime.now().strftime('%H:%M:%S')
+            st.session_state.activity_feed.append(
+                f"[{t}] Volunteer {ob_name.strip()} ({ob_role}) checked in at zone: {ob_zone}"
+            )
+            st.rerun()
+        else:
+            st.warning("Please enter your full name to continue.")
 
-# Ensure we run initial transformation if state empty
-if not st.session_state.transformed_output:
-    transform_content()
+    st.markdown("</div>", unsafe_allow_html=True)
+    st.stop()
 
-# Header display title
-st.markdown(f"""
-<div class="engine-header">
-    <div class="engine-title">LinkedIn Post Generator</div>
-    <div class="engine-subtitle">Viral hooks, readability compatibility, CTA</div>
+# ==============================================================================
+# 11. MAIN DASHBOARD — WEATHER STRIP
+# ==============================================================================
+st.markdown("""
+<div class="weather-strip">
+    <div>⛅ <span class="temp">34°C</span> — Partly Cloudy | Humidity 62% | Wind 12 km/h NW</div>
+    <div class="hydrate">💧 Stay Hydrated — Water stations at every gate</div>
 </div>
 """, unsafe_allow_html=True)
 
-# Main Grid layout: Left Column = Transformed Copy block, Right Column = Hooks & CTAs
-col_output, col_info = st.columns([1.6, 1.0])
+# ==============================================================================
+# 12. HERO BANNER + TOP-RIGHT PROFILE BADGE
+# ==============================================================================
+prof = st.session_state.volunteer_profile
+initials = "".join([w[0].upper() for w in prof["full_name"].split()[:2]])
 
-with col_output:
-    st.markdown("<h3 style='font-family:\"Space Grotesk\", sans-serif; margin-top:0px;'>📝 Transformed Output Blueprint</h3>", unsafe_allow_html=True)
-    
-    # Renders the dynamic stats metrics inside a pastel horizontal layout grid
+col_banner, col_profile = st.columns([4, 1])
+
+with col_banner:
     st.markdown(f"""
-    <div class="metric-layout-grid">
-        <div class="metric-stat-card badge-lavender">
-            <span style="font-family:'Fira Code'; font-size:9px; text-transform:uppercase; display:block; margin-bottom:4px;">Composition Metrics</span>
-            <span style="font-family:'Space Grotesk'; font-size:18px; font-weight:bold;">{st.session_state.metrics['words']} Words</span>
-            <span style="font-size:10px; display:block; margin-top:2px; color:rgba(107,33,168,0.7);">{st.session_state.metrics['characters']} Characters</span>
-        </div>
-        <div class="metric-stat-card badge-mint">
-            <span style="font-family:'Fira Code'; font-size:9px; text-transform:uppercase; display:block; margin-bottom:4px;">Read Time</span>
-            <span style="font-family:'Space Grotesk'; font-size:18px; font-weight:bold;">{st.session_state.metrics['runtime_seconds']} Seconds</span>
-            <span style="font-size:10px; display:block; margin-top:2px; color:rgba(6,95,70,0.7);">Estimated runtime</span>
-        </div>
-        <div class="metric-stat-card badge-sky">
-            <span style="font-family:'Fira Code'; font-size:9px; text-transform:uppercase; display:block; margin-bottom:4px;">Readability Score</span>
-            <span style="font-family:'Space Grotesk'; font-size:18px; font-weight:bold;">{st.session_state.metrics['readability_score']}/100</span>
-            <span style="font-size:9px; display:block; margin-top:2px; color:rgba(7,89,133,0.7); font-weight:bold;">{st.session_state.metrics['readability_label']}</span>
-        </div>
+    <div style="background: linear-gradient(135deg, #071D49 0%, #0A3D7A 40%, #0A66C2 70%, #00FFCC 100%);
+                padding: 1.6rem 2rem; border-radius: 14px; margin-bottom: 0.5rem;
+                box-shadow: 0 6px 20px rgba(0,0,0,0.4); border-bottom: 3px solid #00FFCC;">
+        <h1 style="color: #FFFFFF; margin: 0; font-size: 2.1rem; letter-spacing: 1.5px;
+                   text-shadow: 0 2px 4px rgba(0,0,0,0.5);">🏆 2026 FIFA World Cup</h1>
+        <h2 style="color: #00FFCC; margin: 4px 0 0 0; font-size: 1.2rem; font-weight: 600;
+                   font-family: 'Outfit', sans-serif;">Volunteer Companion Hub</h2>
+        <p style="color: #C0D8E8; margin: 6px 0 0 0; font-size: 0.85rem; opacity: 0.9;">
+            Your personal matchday command center — track guest arrivals, coordinate with your team, and navigate the venue with confidence.</p>
     </div>
     """, unsafe_allow_html=True)
 
-    # Output content viewport wrapper
+with col_profile:
     st.markdown(f"""
-    <div class="ivory-panel" style="margin-top:10px;">
-        <div class="ivory-panel-title">TRANSFORMED COPY TEXT</div>
-        <div class="copy-viewport">{st.session_state.transformed_output}</div>
+    <div class="profile-badge">
+        <div class="avatar-circle">{initials}</div>
+        <div>
+            <div class="badge-name">{prof["full_name"]}</div>
+            <div class="badge-role">{prof["active_role"]}</div>
+        </div>
     </div>
     """, unsafe_allow_html=True)
-    
-    # Download Action for output text
-    st.download_button(
-        label="Download Text Copy",
-        data=st.session_state.transformed_output,
-        file_name="designforge_copy_blueprint.txt",
-        mime="text/plain"
+    with st.expander("📋 View My Profile"):
+        st.markdown(f"**Role:** {prof['active_role']}")
+        st.markdown(f"**Languages:** {prof['language_proficiency']}")
+        st.markdown(f"**Zone:** {prof['assigned_zone']}")
+
+# ==============================================================================
+# 13. METRIC CARDS ROW
+# ==============================================================================
+total_vips = len(st.session_state.vips)
+urgent_vips_list = [v for v in st.session_state.vips if v["status"] == "Urgent Alert"]
+urgent_vips = len(urgent_vips_list)
+warning_vips_list = [v for v in st.session_state.vips if v["status"] == "Warning"]
+nominal_vips = len([v for v in st.session_state.vips if v["status"] == "Nominal"])
+total_alerts = sum(p["beep_count"] for p in st.session_state.directory)
+phase_label = TIMELINE_LABELS[st.session_state.timeline_phase]
+
+# Build dynamic tooltip content for each card
+phase_tips = {
+    0: "Gates open soon. Volunteers should be at stations. First VIP arrivals expected shortly.",
+    1: "Gates are open. Active guest arrivals underway. Stay alert at your assigned zone.",
+    2: "Peak check-in window. All priority guests should be approaching their seats.",
+    3: "Kick-off is imminent. Final corridor sweeps and security checks in progress."
+}
+phase_tip = phase_tips[st.session_state.timeline_phase]
+
+guest_names = ", ".join([v["name"] for v in st.session_state.vips[:3]])
+guest_tip = f"Currently tracking: {guest_names}{'...' if total_vips > 3 else ''}. Check the Expected Client Arrivals tab for full details."
+
+# Build urgent tooltip with specific guest details
+if urgent_vips > 0:
+    urgent_details = "".join(
+        f"<div style='margin-bottom:4px;'>🚨 <b>{v['name']}</b> — {v['location_desc']}<br/>"
+        f"<span style='font-size:0.72rem; color:#FF8888;'>📋 {v['mandates']}</span></div>"
+        for v in urgent_vips_list
+    )
+    urgent_tip = urgent_details
+else:
+    urgent_tip = "✅ No urgent issues. All guest arrivals are on track."
+
+alerted_staff = [p for p in st.session_state.directory if p["beep_count"] > 0]
+if alerted_staff:
+    alert_tip = "Recently alerted: " + ", ".join([f"{p['name']} ({p['beep_count']}x)" for p in alerted_staff]) + "."
+else:
+    alert_tip = "No alerts sent yet. Use Quick Alerts in the Team Directory tab to page a teammate."
+
+st.markdown(f"""
+<div class="metric-container">
+    <div class="metric-card">
+        <div class="card-tooltip">
+            <div class="tip-title">⏱️ Timeline Info</div>
+            {phase_tip}
+        </div>
+        <div class="metric-title">Matchday Phase</div>
+        <div class="metric-val" style="font-size:1.2rem;">{phase_label}</div>
+        <div class="metric-desc">Phase {st.session_state.timeline_phase} of 3</div>
+    </div>
+    <div class="metric-card">
+        <div class="card-tooltip">
+            <div class="tip-title">👥 Guest Overview</div>
+            {guest_tip}<br/>
+            <span style="font-size:0.72rem;">⚠️ {len(warning_vips_list)} delayed · ✅ {nominal_vips} on track</span>
+        </div>
+        <div class="metric-title">Expected Guests</div>
+        <div class="metric-val">{total_vips}</div>
+        <div class="metric-desc">Actively Monitored</div>
+    </div>
+    <div class="metric-card">
+        <div class="card-tooltip {'urgent-tip' if urgent_vips > 0 else ''}">
+            <div class="tip-title" style="color: {'#FF4B4B' if urgent_vips > 0 else '#00FFCC'};">{'🚨 Urgent — Action Required' if urgent_vips > 0 else '✅ All Clear'}</div>
+            {urgent_tip}
+        </div>
+        <div class="metric-title">Urgent Arrivals</div>
+        <div class="metric-val" style="color: {'#FF4B4B' if urgent_vips > 0 else '#00FFCC'}">{urgent_vips}</div>
+        <div class="metric-desc {'urgent' if urgent_vips > 0 else ''}">{"Needs Attention" if urgent_vips > 0 else "All Clear"}</div>
+    </div>
+    <div class="metric-card">
+        <div class="card-tooltip">
+            <div class="tip-title">📨 Alert Summary</div>
+            {alert_tip}
+        </div>
+        <div class="metric-title">Alerts Sent Today</div>
+        <div class="metric-val">{total_alerts}</div>
+        <div class="metric-desc">Team Members Pinged</div>
+    </div>
+</div>
+""", unsafe_allow_html=True)
+
+# ==============================================================================
+# 14. SIDEBAR — MATCHDAY TIMELINE CONTROLS
+# ==============================================================================
+st.sidebar.markdown("<h2 style='color:#00FFCC; font-size:1.2rem;'>⏱️ Matchday Timeline</h2>", unsafe_allow_html=True)
+st.sidebar.markdown(f"**Current Phase:** {st.session_state.timeline_phase} / 3")
+st.sidebar.markdown(f"*{phase_label}*")
+st.sidebar.write("")
+st.sidebar.info("Advance the timeline to see guest movements update in real time on the venue map.")
+sc1, sc2 = st.sidebar.columns(2)
+with sc1:
+    st.button("▶️ Advance", use_container_width=True, on_click=advance_timeline)
+with sc2:
+    st.button("🔄 Reset", use_container_width=True, on_click=reset_timeline)
+
+# Sidebar urgent callout
+urgent_list = [v for v in st.session_state.vips if v["status"] == "Urgent Alert"]
+if urgent_list:
+    st.sidebar.markdown("---")
+    st.sidebar.markdown(
+        f"<div style='border:1px solid #FF4B4B; background:rgba(255,75,75,0.1); padding:10px; border-radius:6px; color:#FF4B4B; font-size:0.83rem;'>"
+        f"🚨 <b>ATTENTION:</b> {urgent_list[0]['name']} — {urgent_list[0]['location_desc']}. Check <b>Expected Client Arrivals</b> for details."
+        "</div>", unsafe_allow_html=True
     )
 
-with col_info:
-    # Scroll stopping Hook recommendations
-    st.markdown("<h3 style='font-family:\"Space Grotesk\", sans-serif; margin-top:0px;'>⚡ Hook Variants</h3>", unsafe_allow_html=True)
-    st.markdown("<p style='font-size:11px; color:#7C808C; margin-top:-10px;'>Scroll-stopping hook variants generated for active archetype.</p>", unsafe_allow_html=True)
-    
-    hook_html = ""
-    for idx, h in enumerate(st.session_state.hooks, start=1):
-        hook_html += f"""
-        <div class="ivory-panel" style="padding:1rem; margin-bottom:10px; border-left:4px solid #8B5CF6;">
-            <span class="pastel-badge badge-lavender" style="margin-bottom:6px;">Hook Variant 0{idx}</span>
-            <div style="font-size:12px; color:#2D2D30; line-height:1.4; font-weight:500;">"{h}"</div>
+# ==============================================================================
+# 15. VIO ASSISTANT — MAIN SCREEN BUTTON + CHAT WINDOW
+# ==============================================================================
+_vio_btn_col, _vio_spacer = st.columns([1, 3])
+with _vio_btn_col:
+    st.markdown("""
+    <div class="vio-launch-btn">
+        <div style="width:40px; height:40px; border-radius:50%; background:rgba(255,255,255,0.15);
+                    display:flex; align-items:center; justify-content:center; font-size:1.3rem;
+                    border:2px solid rgba(255,255,255,0.3); flex-shrink:0;">🤖</div>
+        <div>
+            <div style="font-size:0.95rem; font-weight:700; color:#FFFFFF;">VIO Assistant</div>
+            <div style="font-size:0.7rem; color:rgba(255,255,255,0.8);">Ask about routes & protocols</div>
         </div>
-        """
-    st.markdown(hook_html, unsafe_allow_html=True)
-    
-    st.write("")
-    
-    # Engagement CTAs
-    st.markdown("<h3 style='font-family:\"Space Grotesk\", sans-serif; margin-top:10px;'>📣 Engagement CTAs</h3>", unsafe_allow_html=True)
-    st.markdown("<p style='font-size:11px; color:#7C808C; margin-top:-10px;'>Recommended Call-To-Action closures to boost content conversions.</p>", unsafe_allow_html=True)
-    
-    cta_html = ""
-    for idx, c in enumerate(st.session_state.ctas, start=1):
-        cta_html += f"""
-        <div class="ivory-panel" style="padding:1rem; margin-bottom:10px; border-left:4px solid #34D399;">
-            <span class="pastel-badge badge-mint" style="margin-bottom:6px;">CTA Variant 0{idx}</span>
-            <div style="font-size:12px; color:#2D2D30; line-height:1.4; font-weight:500;">{c}</div>
-        </div>
-        """
-    st.markdown(cta_html, unsafe_allow_html=True)
-    
-    # System Details panel
-    st.markdown(f"""
-    <div class="ivory-panel" style="margin-top:15px; background-color:#F3F2EC; border-color:#E2E1D8;">
-        <div class="ivory-panel-title" style="border-bottom:1px solid #E2E1D8;">🔧 Blueprint Engine Metadata</div>
-        <div style="font-family:'Fira Code', monospace; font-size:10px; color:#2D2D30; line-height:1.5;">
-            <strong>ARCHETYPE:</strong> {st.session_state.archetype}<br>
-            <strong>WORDS:</strong> {st.session_state.metrics['words']}<br>
-            <strong>READABILITY:</strong> {st.session_state.metrics['readability_score']}<br>
-            <strong>RUN TIME:</strong> {st.session_state.metrics['runtime_seconds']}s
+    </div>
+    """, unsafe_allow_html=True)
+    if st.button("🤖 Open VIO Assistant" if not st.session_state.show_vio_chat else "✕ Close VIO Assistant", use_container_width=True, key="vio_toggle_btn", type="primary" if not st.session_state.show_vio_chat else "secondary"):
+        st.session_state.show_vio_chat = not st.session_state.show_vio_chat
+        st.rerun()
+
+# VIO Chat Window (shown when toggled open)
+if st.session_state.show_vio_chat:
+    st.markdown('<div class="vio-chat-window">', unsafe_allow_html=True)
+
+    # Chat header
+    st.markdown("""
+    <div style='background:linear-gradient(135deg, #0A66C2, #00FFCC); padding:1rem 1.4rem;
+                display:flex; align-items:center; gap:1rem;'>
+        <div style='width:46px; height:46px; border-radius:50%; background:rgba(255,255,255,0.15);
+                    display:flex; align-items:center; justify-content:center; font-size:1.5rem;
+                    border:2px solid rgba(255,255,255,0.3);'>🤖</div>
+        <div>
+            <div style='font-size:1.05rem; font-weight:700; color:#FFFFFF;'>VIO — Volunteer Intelligent Operator</div>
+            <div style='font-size:0.78rem; color:rgba(255,255,255,0.85);'>Online • Ask me anything about venue routing, guest handling, or emergency protocols</div>
         </div>
     </div>
     """, unsafe_allow_html=True)
 
+    # Chat body
+    with st.container():
+        st.markdown("**💬 Suggested Questions — tap any for instant guidance:**")
+        vq1, vq2, vq3 = st.columns(3)
+        with vq1:
+            if st.button("♿ Spanish Wheelchair Route", use_container_width=True, key="vio_q1"):
+                st.session_state.chat_history.append(("Spanish VIP wheelchair access path", VIO_KNOWLEDGE["spanish vip wheelchair access path"]))
+                st.rerun()
+            if st.button("🚗 German FA Drop-off", use_container_width=True, key="vio_q2"):
+                st.session_state.chat_history.append(("German VIP drop-off", VIO_KNOWLEDGE["german vip drop-off"]))
+                st.rerun()
+        with vq2:
+            if st.button("⚡ Gate B → Suite 4", use_container_width=True, key="vio_q3"):
+                st.session_state.chat_history.append(("Fastest route from Gate B to Executive Box 4", VIO_KNOWLEDGE["fastest route from gate b to executive box 4"]))
+                st.rerun()
+            if st.button("🇯🇵 Tokyo FC Protocol", use_container_width=True, key="vio_q4"):
+                st.session_state.chat_history.append(("Japanese VIP translation", VIO_KNOWLEDGE["japanese vip translation"]))
+                st.rerun()
+        with vq3:
+            if st.button("🚨 Emergency Medical", use_container_width=True, key="vio_q5"):
+                st.session_state.chat_history.append(("Emergency medical route", VIO_KNOWLEDGE["emergency medical route"]))
+                st.rerun()
+            if st.button("🕌 Arabic / Halal Protocol", use_container_width=True, key="vio_q6"):
+                st.session_state.chat_history.append(("Arabic VIP protocol", VIO_KNOWLEDGE["arabic vip protocol"]))
+                st.rerun()
+
+        st.write("")
+        user_q = st.text_input("💬 Type your question here...", key="vio_input", placeholder="e.g. 'How do I escort a wheelchair guest to the Royal Box?'")
+        vio_send_col, vio_clear_col = st.columns([4, 1])
+        with vio_send_col:
+            send_pressed = st.button("Send ➤", type="primary", use_container_width=True, key="vio_send")
+        with vio_clear_col:
+            if st.button("🗑️ Clear", use_container_width=True, key="vio_clear"):
+                st.session_state.chat_history = []
+                st.rerun()
+
+        if send_pressed and user_q:
+            q_clean = user_q.lower()
+            matched = None
+            for key in VIO_KNOWLEDGE:
+                kws = key.split()
+                if key in q_clean or sum(1 for kw in kws if kw in q_clean) >= 2:
+                    matched = key
+                    break
+            if not matched:
+                if "spanish" in q_clean or "wheelchair" in q_clean: matched = "spanish vip wheelchair access path"
+                elif "gate b" in q_clean or "box 4" in q_clean or "suite 4" in q_clean: matched = "fastest route from gate b to executive box 4"
+                elif "german" in q_clean: matched = "german vip drop-off"
+                elif "japanese" in q_clean or "tokyo" in q_clean: matched = "japanese vip translation"
+                elif "emergency" in q_clean or "medical" in q_clean: matched = "emergency medical route"
+                elif "arabic" in q_clean or "halal" in q_clean: matched = "arabic vip protocol"
+            if matched:
+                st.session_state.chat_history.append((user_q, VIO_KNOWLEDGE[matched]))
+            else:
+                st.session_state.chat_history.append((user_q, {
+                    "title": "🔍 No Matching Guide Found",
+                    "steps": [
+                        "Your query didn't match any pre-loaded guides.",
+                        "Try keywords like: 'Spanish wheelchair', 'Gate B Suite 4', 'German drop-off', 'Japanese translator', 'emergency medical', 'Arabic halal'.",
+                        "Or contact your Team Lead for live assistance."
+                    ]
+                }))
+            st.rerun()
+
+        # Chat history
+        if st.session_state.chat_history:
+            st.markdown("---")
+            st.markdown("**📜 Conversation History:**")
+            for query, reply in reversed(st.session_state.chat_history):
+                bc = "#FF4B4B" if "No Matching" in reply["title"] else "#00FFCC"
+                st.markdown(f"**You asked:** *\"{query}\"*")
+                st.markdown(f"""
+                <div style='background:#08121E; border-left:4px solid {bc}; padding:1rem; border-radius:0 10px 10px 0; margin-bottom:1rem;'>
+                    <div style='margin-top:0; color:#FFFFFF; font-size:1rem; font-weight:600;'>{reply["title"]}</div>
+                    <ol style='margin-bottom:0; padding-left:1.2rem; color:#BEC2CA; font-size:0.88rem; margin-top:0.5rem;'>
+                        {"".join(f"<li style='margin-bottom:0.3rem;'>{s}</li>" for s in reply["steps"])}
+                    </ol>
+                </div>
+                """, unsafe_allow_html=True)
+
+    st.markdown('</div>', unsafe_allow_html=True)
+
 # ==============================================================================
-# 5. GLOBAL CONFIGURATION PROFILE DUMP (BOTTOM ACTION)
+# 16. CENTRAL TABS NAVIGATION (IGNITION AURA)
 # ==============================================================================
-st.write("---")
-st.markdown("### 📥 Active Export JSON Spec Map")
-json_config = {
-    "engineName": "LinkedIn Post Generator",
-    "version": "1.0.0",
-    "configuration": {
-        "activeArchetype": st.session_state.archetype,
-        "inputWordCount": len(st.session_state.user_notes.split()),
-        "outputMetrics": st.session_state.metrics,
-        "previewOutput": st.session_state.transformed_output
-    }
-}
-st.code(json.dumps(json_config, indent=2), language="json")
+tab_map, tab_arrivals, tab_team, tab_schedule = st.tabs([
+    "📍 Venue Map & Wayfinding",
+    "👥 Expected Client Arrivals",
+    "📇 Team Directory & Alerts",
+    "🗓️ Your Shift Schedule"
+])
+
+# ==============================================================================
+# TAB 1: VENUE MAP & WAYFINDING
+# ==============================================================================
+with tab_map:
+    st.subheader("📍 Venue Map & Wayfinding")
+    st.markdown("Use this interactive map to locate guests, find your way around the venue, and plan the best walking routes between stations.")
+
+    map_view = st.segmented_control(
+        "Select venue zone:",
+        options=["Outside — Gates & Transport", "Inside — Suites & Lounges"],
+        default="Outside — Gates & Transport"
+    )
+
+    # Route selector dropdowns
+    rc1, rc2 = st.columns(2)
+    is_outside = map_view == "Outside — Gates & Transport"
+    loc_options = list(LOCATION_COORDS_OUTSIDE.keys()) if is_outside else list(LOCATION_COORDS_INSIDE.keys())
+    with rc1:
+        route_from = st.selectbox("📍 My Current Station", ["— Select —"] + loc_options, key="route_from")
+    with rc2:
+        route_to = st.selectbox("🎯 Client Destination", ["— Select —"] + loc_options, key="route_to")
+
+    fig = go.Figure()
+    coord_map = LOCATION_COORDS_OUTSIDE if is_outside else LOCATION_COORDS_INSIDE
+
+    if is_outside:
+        # Gates
+        for gx, label in [(2.0, "Gate A"), (5.0, "Gate B"), (8.0, "Gate C")]:
+            fig.add_shape(type="rect", x0=gx-0.5, y0=7.2, x1=gx+0.5, y1=7.8, fillcolor="#122030", line=dict(color="#1E3A52", width=2))
+            fig.add_annotation(x=gx, y=7.5, text=label, showarrow=False, font=dict(color="#FFFFFF", size=11, family="Outfit"))
+        # Transport Hub
+        fig.add_shape(type="rect", x0=1.0, y0=2.0, x1=2.2, y1=2.8, fillcolor="#050E17", line=dict(color="#1E3A52", width=1))
+        fig.add_annotation(x=1.6, y=2.4, text="Transport Hub", showarrow=False, font=dict(color="#BEC2CA", size=9, family="Outfit"))
+        # Helipad
+        fig.add_shape(type="circle", x0=7.6, y0=1.4, x1=8.4, y1=2.2, fillcolor="#050E17", line=dict(color="#FF4B4B", width=2))
+        fig.add_annotation(x=8.0, y=1.8, text="VIP Helipad", showarrow=False, font=dict(color="#FF4B4B", size=9, family="Outfit"))
+        # Drop-Off
+        fig.add_shape(type="circle", x0=4.6, y0=4.6, x1=5.4, y1=5.4, fillcolor="#0E2333", line=dict(color="#00FFCC", width=1.5))
+        fig.add_annotation(x=5.0, y=5.0, text="VIP Drop-Off", showarrow=False, font=dict(color="#00FFCC", size=10, family="Outfit"))
+        # Footpaths (dashed)
+        for xs, ys in [([2.0,2.0],[5.0,7.2]), ([5.0,5.0],[5.0,7.2]), ([8.0,8.0],[5.0,7.2]), ([1.6,1.6,5.0,8.0,8.0],[2.8,5.0,5.0,5.0,2.2])]:
+            fig.add_trace(go.Scatter(x=xs, y=ys, mode="lines", line=dict(color="#1E3A52", width=4, dash="dash"), hoverinfo="skip", showlegend=False))
+        # VIP markers
+        vips_zone = [v for v in st.session_state.vips if v["zone"] == "Outside"]
+    else:
+        # Pitch
+        fig.add_shape(type="rect", x0=3.2, y0=3.2, x1=6.8, y1=6.8, fillcolor="#103c2f", line=dict(color="#00FFCC", width=1.5))
+        fig.add_shape(type="circle", x0=4.5, y0=4.5, x1=5.5, y1=5.5, line=dict(color="#FFFFFF", width=1))
+        fig.add_shape(type="line", x0=5.0, y0=3.2, x1=5.0, y1=6.8, line=dict(color="#FFFFFF", width=1))
+        fig.add_annotation(x=5.0, y=5.0, text="PITCH", showarrow=False, font=dict(color="#FFFFFF", size=14, family="Space Grotesk"))
+        # Royal Box
+        fig.add_shape(type="rect", x0=4.3, y0=7.5, x1=5.7, y1=8.2, fillcolor="#2A2215", line=dict(color="#FFAA00", width=2))
+        fig.add_annotation(x=5.0, y=7.85, text="👑 Royal Box", showarrow=False, font=dict(color="#FFAA00", size=11, family="Outfit"))
+        # VIP Lounges
+        fig.add_shape(type="rect", x0=1.8, y0=6.8, x1=2.8, y1=7.4, fillcolor="#0F2030", line=dict(color="#1E3A52", width=2))
+        fig.add_annotation(x=2.3, y=7.1, text="Lounge 1", showarrow=False, font=dict(color="#FFFFFF", size=10, family="Outfit"))
+        fig.add_shape(type="rect", x0=7.2, y0=6.8, x1=8.2, y1=7.4, fillcolor="#0F2030", line=dict(color="#1E3A52", width=2))
+        fig.add_annotation(x=7.7, y=7.1, text="Lounge 2", showarrow=False, font=dict(color="#FFFFFF", size=10, family="Outfit"))
+        # Exec Suites
+        fig.add_shape(type="rect", x0=1.5, y0=2.0, x1=3.5, y1=2.6, fillcolor="#122030", line=dict(color="#1E3A52", width=1))
+        fig.add_annotation(x=2.5, y=2.3, text="Suites 1-5", showarrow=False, font=dict(color="#BEC2CA", size=9, family="Outfit"))
+        fig.add_shape(type="rect", x0=6.5, y0=2.0, x1=8.5, y1=2.6, fillcolor="#122030", line=dict(color="#1E3A52", width=1))
+        fig.add_annotation(x=7.5, y=2.3, text="Suites 6-10", showarrow=False, font=dict(color="#BEC2CA", size=9, family="Outfit"))
+        vips_zone = [v for v in st.session_state.vips if v["zone"] == "Inside"]
+
+    # Draw VIP markers
+    if vips_zone:
+        colors = []
+        for v in vips_zone:
+            if v["status"] == "Urgent Alert": colors.append("#FF4B4B")
+            elif v["status"] == "Warning": colors.append("#FFAA00")
+            else: colors.append("#00FFCC")
+        fig.add_trace(go.Scatter(
+            x=[v["x"] for v in vips_zone], y=[v["y"] for v in vips_zone],
+            mode="markers+text",
+            marker=dict(size=20, color=colors, line=dict(color="#FFFFFF", width=2), symbol="circle"),
+            text=[v["name"] for v in vips_zone], textposition="top center",
+            textfont=dict(color="#FFFFFF", size=11, family="Outfit"),
+            hovertemplate="<b>%{text}</b><br>Status: %{customdata[0]}<br>Location: %{customdata[1]}<br>Destination: %{customdata[2]}<extra></extra>",
+            customdata=[[v["status"], v["location_desc"], v["target"]] for v in vips_zone],
+            showlegend=False
+        ))
+
+    # Draw route line if both locations are selected
+    if route_from != "— Select —" and route_to != "— Select —" and route_from != route_to:
+        if route_from in coord_map and route_to in coord_map:
+            fx, fy = coord_map[route_from]
+            tx, ty = coord_map[route_to]
+            mid_x = (fx + tx) / 2
+            mid_y = (fy + ty) / 2 + 0.5
+            fig.add_trace(go.Scatter(
+                x=[fx, mid_x, tx], y=[fy, mid_y, ty], mode="lines+markers",
+                line=dict(color="#0A66C2", width=4), marker=dict(size=12, color="#0A66C2", symbol=["circle", "diamond", "star"]),
+                hoverinfo="skip", showlegend=False
+            ))
+            fig.add_annotation(x=mid_x, y=mid_y+0.3, text="Suggested Route", showarrow=False,
+                font=dict(color="#0A66C2", size=10, family="Outfit"))
+
+    fig.update_layout(
+        xaxis=dict(range=[0, 10], showgrid=False, zeroline=False, visible=False),
+        yaxis=dict(range=[0, 10], showgrid=False, zeroline=False, visible=False),
+        plot_bgcolor="#0E1117", paper_bgcolor="#0E1117",
+        margin=dict(l=0, r=0, t=10, b=0), showlegend=False, height=500, dragmode=False
+    )
+    st.plotly_chart(fig, use_container_width=True, config={"displayModeBar": False})
+
+    lc1, lc2, lc3 = st.columns(3)
+    with lc1: st.markdown("<span class='badge badge-urgent'>● Urgent</span> — Delays or blockages", unsafe_allow_html=True)
+    with lc2: st.markdown("<span class='badge badge-warning'>● Delayed</span> — Customs or language issues", unsafe_allow_html=True)
+    with lc3: st.markdown("<span class='badge badge-nominal'>● On Track</span> — Arrived or on schedule", unsafe_allow_html=True)
+
+# ==============================================================================
+# TAB 2: EXPECTED CLIENT ARRIVALS
+# ==============================================================================
+with tab_arrivals:
+    st.subheader("👥 Expected Client Arrivals")
+    st.markdown("Monitor all incoming VIP guests. Use the filters to focus on specific urgency levels, languages, or travel modes.")
+
+    fc1, fc2, fc3 = st.columns(3)
+    with fc1: f_status = st.selectbox("Filter by Status:", ["All", "Urgent Alert", "Warning", "Nominal"])
+    with fc2: f_lang = st.selectbox("Filter by Language:", ["All", "Spanish", "German", "Japanese", "French", "Portuguese"])
+    with fc3: f_mode = st.selectbox("Filter by Travel Mode:", ["All", "Private Escort", "VIP Shuttle", "Charter Bus", "Official Car", "Helicopter"])
+
+    filtered = st.session_state.vips
+    if f_status != "All": filtered = [v for v in filtered if v["status"] == f_status]
+    if f_lang != "All": filtered = [v for v in filtered if v["language"] == f_lang]
+    if f_mode != "All": filtered = [v for v in filtered if v["transit_mode"] == f_mode]
+
+    if not filtered:
+        st.info("No guest arrivals match your filters.")
+    else:
+        for idx, vip in enumerate(filtered):
+            border_color = "#FF4B4B" if vip["status"] == "Urgent Alert" else "#FFAA00" if vip["status"] == "Warning" else "#00FFCC"
+            status_class = "badge-urgent" if vip["status"] == "Urgent Alert" else "badge-warning" if vip["status"] == "Warning" else "badge-nominal"
+            st.markdown(f"""
+            <div style='background:#122030; border-radius:10px; border-left:6px solid {border_color};
+                        padding:1.2rem; margin-bottom:0.8rem; border:1px solid #1E3A52; border-left:6px solid {border_color};'>
+                <div style='display:flex; justify-content:space-between; align-items:center;'>
+                    <h4 style='margin:0; font-size:1.15rem;'>{vip["name"]} <span style='font-size:0.88rem; color:#BEC2CA;'>({vip["affiliation"]})</span></h4>
+                    <span class="badge {status_class}">{vip["status"]}</span>
+                </div>
+                <div style='display:flex; flex-wrap:wrap; gap:1.2rem; margin-top:0.65rem; font-size:0.88rem; color:#BEC2CA;'>
+                    <div>📍 <b>Location:</b> {vip["location_desc"]}</div>
+                    <div>🚗 <b>Travel:</b> {vip["transit_mode"]}</div>
+                    <div>⏰ <b>ETA:</b> {vip["eta"]}</div>
+                    <div>🗣️ <b>Language:</b> {vip["language"]}</div>
+                    <div>🎯 <b>Destination:</b> {vip["target"]}</div>
+                    <div>📋 <b>Notes:</b> {vip["mandates"]}</div>
+                </div>
+            </div>
+            """, unsafe_allow_html=True)
+            bc1, bc2 = st.columns([1, 5])
+            with bc1:
+                if st.button("📋 View Arrival Checklist", key=f"checklist_{idx}_{vip['name']}"):
+                    st.session_state.selected_contingency = vip
+
+    if st.session_state.selected_contingency:
+        v = st.session_state.selected_contingency
+        st.markdown("---")
+        st.markdown(f"""
+        <div style='border:1px solid #0A66C2; border-radius:10px; padding:1.3rem; background:#0F1E35;'>
+            <h4 style='color:#0A66C2; margin-top:0;'>📋 Guest Arrival Action Plan: {v['name']}</h4>
+            <p style='font-size:0.9rem;'><b>Current situation:</b> {v['location_desc']} | <b>Destination:</b> {v['target']} | <b>Language:</b> {v['language']}</p>
+        </div>
+        """, unsafe_allow_html=True)
+
+        matched_key = None
+        if "spanish" in v["language"].lower() or "wheelchair" in v["mandates"].lower():
+            matched_key = "spanish vip wheelchair access path"
+        elif "tokyo" in v["affiliation"].lower() or "japanese" in v["language"].lower():
+            matched_key = "japanese vip translation"
+        elif "german" in v["language"].lower():
+            matched_key = "german vip drop-off"
+        elif "arabic" in v["language"].lower() or "halal" in v["mandates"].lower():
+            matched_key = "arabic vip protocol"
+
+        if matched_key and matched_key in VIO_KNOWLEDGE:
+            k = VIO_KNOWLEDGE[matched_key]
+            st.markdown(f"##### {k['title']}")
+            for i, step in enumerate(k["steps"], 1):
+                st.markdown(f"**Step {i}:** {step}")
+            suggested = None
+            for s in st.session_state.directory:
+                if v["language"] in s["languages"]:
+                    suggested = s
+                    break
+            if suggested:
+                st.info(f"💡 **Suggested contact:** Send a Quick Alert to **{suggested['name']}** ({suggested['role']}) in the Team Directory tab.")
+        else:
+            st.markdown("**Standard Reception Protocol:**")
+            st.markdown(f"1. Station a coordinator at {v['gate']} to receive this guest.")
+            st.markdown(f"2. Escort them through the nearest VIP corridor to **{v['target']}**.")
+            st.markdown("3. Confirm dietary or accessibility requirements with Catering/Facilities.")
+
+        if st.button("✅ Close Action Plan"):
+            st.session_state.selected_contingency = None
+            st.rerun()
+
+# ==============================================================================
+# TAB 3: TEAM DIRECTORY & ALERTS
+# ==============================================================================
+with tab_team:
+    st.subheader("📇 Team Directory & Quick Alerts")
+    st.markdown("Find and contact your fellow volunteers instantly. Sending a **Quick Alert** silently pages their handheld device — no radio needed.")
+
+    search = st.text_input("🔍 Search by name, role, zone, or language:", "")
+    filtered_dir = st.session_state.directory
+    if search:
+        q = search.lower()
+        filtered_dir = [p for p in filtered_dir if q in p["name"].lower() or q in p["role"].lower() or q in p["zone"].lower() or q in p["languages"].lower()]
+
+    if not filtered_dir:
+        st.warning("No team members found matching your search.")
+    else:
+        grid = st.columns(2)
+        for idx, person in enumerate(filtered_dir):
+            with grid[idx % 2]:
+                avatar_svg = make_avatar_svg(person["name"], person["role"])
+                st.markdown(f"""
+                <div class="profile-card">
+                    <div class="profile-header">
+                        {avatar_svg}
+                        <div style="flex:1;">
+                            <span class="profile-name">{person["name"]}</span><br/>
+                            <span class="profile-role-badge">{person["role"]}</span>
+                        </div>
+                    </div>
+                    <div class="profile-info"><span class="profile-label">📍 Zone:</span> {person["zone"]}</div>
+                    <div class="profile-info"><span class="profile-label">🗣️ Languages:</span> {person["languages"]}</div>
+                    <div class="profile-info"><span class="profile-label">📶 Status:</span> <span style="color:#00FFCC;">● Active</span></div>
+                    <div class="profile-info"><span class="profile-label">📨 Alerts Sent:</span> <b>{person["beep_count"]}</b></div>
+                </div>
+                """, unsafe_allow_html=True)
+                if st.button(f"📨 Send Quick Alert: {person['name']}", key=f"alert_{person['id']}_{idx}", use_container_width=True):
+                    send_alert(person["id"], person["name"], person["zone"])
+                    st.rerun()
+
+# ==============================================================================
+# TAB 4: YOUR SHIFT SCHEDULE
+# ==============================================================================
+with tab_schedule:
+    st.subheader("🗓️ Your Shift Schedule")
+    st.markdown("A chronological overview of your matchday responsibilities. Milestones update automatically as the timeline advances.")
+
+    current_phase = st.session_state.timeline_phase
+    for item in SHIFT_SCHEDULE:
+        if item["phase_complete"] < current_phase:
+            css_class = "completed"
+            status_label = "✓ Done"
+            status_css = "done"
+        elif item["phase_complete"] == current_phase:
+            css_class = "current"
+            status_label = "● Active Now"
+            status_css = "active"
+        else:
+            css_class = "upcoming"
+            status_label = "○ Upcoming"
+            status_css = "pending"
+
+        st.markdown(f"""
+        <div class="schedule-item {css_class}">
+            <div class="schedule-time">{item["time"]}</div>
+            <div>
+                <div class="schedule-desc">{item["desc"]}</div>
+                <div class="schedule-status {status_css}">{status_label}</div>
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
+
+# ==============================================================================
+# 16. LIVE ACTIVITY TIMELINE (BELOW TABS)
+# ==============================================================================
+st.markdown("---")
+act_col1, act_col2 = st.columns([3, 1])
+with act_col1:
+    st.markdown("<h3 style='font-size:1.1rem; margin-bottom:0.5rem;'>📋 Live Activity Timeline</h3>", unsafe_allow_html=True)
+    feed_html = "".join(f"<div class='feed-entry'>{e}</div>" for e in reversed(st.session_state.activity_feed))
+    st.markdown(f'<div class="activity-feed">{feed_html}</div>', unsafe_allow_html=True)
+with act_col2:
+    st.markdown("<h3 style='font-size:1.1rem; margin-bottom:0.5rem;'>🛠️ Quick Actions</h3>", unsafe_allow_html=True)
+    if st.button("🗑️ Clear Activity Log", use_container_width=True):
+        st.session_state.activity_feed = [f"[{datetime.datetime.now().strftime('%H:%M:%S')}] Activity log cleared."]
+        st.rerun()
+    st.markdown(
+        "<div style='background:#122030; border-radius:8px; padding:0.8rem; border:1px solid #1E3A52; font-size:0.82rem; color:#BEC2CA; margin-top:0.5rem;'>"
+        "<b>💡 Tip:</b> Use <b>Quick Alerts</b> to silently page teammates when radio channels are busy."
+        "</div>", unsafe_allow_html=True
+    )
+
+
