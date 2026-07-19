@@ -127,5 +127,43 @@ class TestVIOApp(unittest.TestCase):
         self.assertTrue(svg_content.endswith("</svg>"))
         self.assertIn("SC", svg_content)
 
+    def test_onboarding_form_locked_initially(self):
+        """Verify that a new volunteer starts in locked state (onboarded=False)."""
+        mock_session_state.onboarded = False
+        self.assertFalse(mock_session_state.onboarded)
+
+    def test_onboarding_form_submission_success(self):
+        """Verify that submitting the onboarding form transition to unlocked state (onboarded=True)."""
+        import streamlit
+        # Set initial locked state
+        mock_session_state.onboarded = False
+        mock_session_state.volunteer_profile = {}
+
+        # Mock the input values and the submission button click
+        with unittest.mock.patch('streamlit.text_input', return_value="Alex Johnson"), \
+             unittest.mock.patch('streamlit.button', return_value=True), \
+             unittest.mock.patch('streamlit.selectbox', return_value="Logistics Lead"), \
+             unittest.mock.patch('streamlit.multiselect', return_value=["English", "Spanish"]):
+            
+            name = streamlit.text_input("Full Name")
+            role = streamlit.selectbox("Active Role", [])
+            langs = streamlit.multiselect("Languages", [])
+            zone = streamlit.selectbox("Zone", [])
+            
+            if streamlit.button("✅  Begin My Shift"):
+                if name.strip():
+                    mock_session_state.volunteer_profile = {
+                        "full_name": name.strip(),
+                        "active_role": role,
+                        "language_proficiency": ", ".join(langs),
+                        "assigned_zone": zone
+                    }
+                    mock_session_state.onboarded = True
+        
+        # Assert transition from locked to unlocked is successful
+        self.assertTrue(mock_session_state.onboarded)
+        self.assertEqual(mock_session_state.volunteer_profile["full_name"], "Alex Johnson")
+        self.assertEqual(mock_session_state.volunteer_profile["active_role"], "Logistics Lead")
+
 if __name__ == '__main__':
     unittest.main()

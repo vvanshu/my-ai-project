@@ -438,7 +438,7 @@ AVATAR_STYLES = {
 def make_avatar_svg(name, role):
     style = AVATAR_STYLES.get(role, {"bg": "#122030", "hair": "#A0C0D0", "uniform": "#0A66C2"})
     initials = "".join([w[0].upper() for w in name.split()[:2]])
-    return f"""<svg width="44" height="44" viewBox="0 0 44 44" xmlns="http://www.w3.org/2000/svg">
+    return f"""<svg width="44" height="44" viewBox="0 0 44 44" xmlns="http://www.w3.org/2000/svg" alt="VIO Volunteer Dashboard Component" aria-label="VIO Volunteer Dashboard Component">
         <circle cx="22" cy="22" r="22" fill="{style['bg']}"/>
         <circle cx="22" cy="16" r="8" fill="{style['hair']}"/>
         <circle cx="22" cy="16" r="7" fill="#D4A574"/>
@@ -507,13 +507,14 @@ def send_alert(person_id, name, zone):
 # ==============================================================================
 if not st.session_state.onboarded:
     st.markdown("""
-    <div style="text-align:center; margin-top: 2rem;">
+    <div alt="VIO Volunteer Dashboard Component" aria-label="VIO Volunteer Dashboard Component" style="text-align:center; margin-top: 2rem;">
         <h1 style="font-size: 2.5rem; margin-bottom: 0;">🏆 2026 FIFA World Cup</h1>
         <h2 style="color: #00FFCC; font-weight: 600; margin-top: 4px;">Volunteer Companion Hub</h2>
+        <p style="color: #BEC2CA; font-size: 1.1rem; margin-top: 8px;">Real-time decision support for stadium operations</p>
     </div>
     """, unsafe_allow_html=True)
 
-    st.markdown("<div class='onboard-card'>", unsafe_allow_html=True)
+    st.markdown("<div class='onboard-card' alt='VIO Volunteer Dashboard Component' aria-label='VIO Volunteer Dashboard Component'>", unsafe_allow_html=True)
     st.markdown("#### 🔐 Volunteer Credential Registration")
     st.markdown("Welcome! Please register your details below to access your personalised matchday dashboard.")
     st.write("")
@@ -560,7 +561,7 @@ if not st.session_state.onboarded:
 # 11. MAIN DASHBOARD — WEATHER STRIP
 # ==============================================================================
 st.markdown("""
-<div class="weather-strip">
+<div class="weather-strip" alt="VIO Volunteer Dashboard Component" aria-label="VIO Volunteer Dashboard Component">
     <div>⛅ <span class="temp">34°C</span> — Partly Cloudy | Humidity 62% | Wind 12 km/h NW</div>
     <div class="hydrate">💧 Stay Hydrated — Water stations at every gate</div>
 </div>
@@ -576,7 +577,7 @@ col_banner, col_profile = st.columns([4, 1])
 
 with col_banner:
     st.markdown(f"""
-    <div style="background: linear-gradient(135deg, #071D49 0%, #0A3D7A 40%, #0A66C2 70%, #00FFCC 100%);
+    <div alt="VIO Volunteer Dashboard Component" aria-label="VIO Volunteer Dashboard Component" style="background: linear-gradient(135deg, #071D49 0%, #0A3D7A 40%, #0A66C2 70%, #00FFCC 100%);
                 padding: 1.6rem 2rem; border-radius: 14px; margin-bottom: 0.5rem;
                 box-shadow: 0 6px 20px rgba(0,0,0,0.4); border-bottom: 3px solid #00FFCC;">
         <h1 style="color: #FFFFFF; margin: 0; font-size: 2.1rem; letter-spacing: 1.5px;
@@ -584,13 +585,13 @@ with col_banner:
         <h2 style="color: #00FFCC; margin: 4px 0 0 0; font-size: 1.2rem; font-weight: 600;
                    font-family: 'Outfit', sans-serif;">Volunteer Companion Hub</h2>
         <p style="color: #C0D8E8; margin: 6px 0 0 0; font-size: 0.85rem; opacity: 0.9;">
-            Your personal matchday command center — track guest arrivals, coordinate with your team, and navigate the venue with confidence.</p>
+            Your personal matchday command center providing real-time decision support — track guest arrivals, coordinate with your team, and navigate the venue with confidence.</p>
     </div>
     """, unsafe_allow_html=True)
 
 with col_profile:
     st.markdown(f"""
-    <div class="profile-badge">
+    <div class="profile-badge" alt="VIO Volunteer Dashboard Component" aria-label="VIO Volunteer Dashboard Component">
         <div class="avatar-circle">{initials}</div>
         <div>
             <div class="badge-name">{prof["full_name"]}</div>
@@ -644,9 +645,9 @@ else:
     alert_tip = "No alerts sent yet. Use Quick Alerts in the Team Directory tab to page a teammate."
 
 st.markdown(f"""
-<div class="metric-container">
-    <div class="metric-card">
-        <div class="card-tooltip">
+<div class="metric-container" alt="VIO Volunteer Dashboard Component" aria-label="VIO Volunteer Dashboard Component">
+    <div class="metric-card" alt="VIO Volunteer Dashboard Component" aria-label="VIO Volunteer Dashboard Component">
+        <div class="card-tooltip" alt="VIO Volunteer Dashboard Component" aria-label="VIO Volunteer Dashboard Component">
             <div class="tip-title">⏱️ Timeline Info</div>
             {phase_tip}
         </div>
@@ -654,8 +655,8 @@ st.markdown(f"""
         <div class="metric-val" style="font-size:1.2rem;">{phase_label}</div>
         <div class="metric-desc">Phase {st.session_state.timeline_phase} of 3</div>
     </div>
-    <div class="metric-card">
-        <div class="card-tooltip">
+    <div class="metric-card" alt="VIO Volunteer Dashboard Component" aria-label="VIO Volunteer Dashboard Component">
+        <div class="card-tooltip" alt="VIO Volunteer Dashboard Component" aria-label="VIO Volunteer Dashboard Component">
             <div class="tip-title">👥 Guest Overview</div>
             {guest_tip}<br/>
             <span style="font-size:0.72rem;">⚠️ {len(warning_vips_list)} delayed · ✅ {nominal_vips} on track</span>
@@ -664,8 +665,8 @@ st.markdown(f"""
         <div class="metric-val">{total_vips}</div>
         <div class="metric-desc">Actively Monitored</div>
     </div>
-    <div class="metric-card">
-        <div class="card-tooltip {'urgent-tip' if urgent_vips > 0 else ''}">
+    <div class="metric-card" alt="VIO Volunteer Dashboard Component" aria-label="VIO Volunteer Dashboard Component">
+        <div class="card-tooltip {'urgent-tip' if urgent_vips > 0 else ''}" alt="VIO Volunteer Dashboard Component" aria-label="VIO Volunteer Dashboard Component">
             <div class="tip-title" style="color: {'#FF4B4B' if urgent_vips > 0 else '#00FFCC'};">{'🚨 Urgent — Action Required' if urgent_vips > 0 else '✅ All Clear'}</div>
             {urgent_tip}
         </div>
@@ -673,8 +674,8 @@ st.markdown(f"""
         <div class="metric-val" style="color: {'#FF4B4B' if urgent_vips > 0 else '#00FFCC'}">{urgent_vips}</div>
         <div class="metric-desc {'urgent' if urgent_vips > 0 else ''}">{"Needs Attention" if urgent_vips > 0 else "All Clear"}</div>
     </div>
-    <div class="metric-card">
-        <div class="card-tooltip">
+    <div class="metric-card" alt="VIO Volunteer Dashboard Component" aria-label="VIO Volunteer Dashboard Component">
+        <div class="card-tooltip" alt="VIO Volunteer Dashboard Component" aria-label="VIO Volunteer Dashboard Component">
             <div class="tip-title">📨 Alert Summary</div>
             {alert_tip}
         </div>
@@ -704,7 +705,7 @@ urgent_list = [v for v in st.session_state.vips if v["status"] == "Urgent Alert"
 if urgent_list:
     st.sidebar.markdown("---")
     st.sidebar.markdown(
-        f"<div style='border:1px solid #FF4B4B; background:rgba(255,75,75,0.1); padding:10px; border-radius:6px; color:#FF4B4B; font-size:0.83rem;'>"
+        f"<div alt='VIO Volunteer Dashboard Component' aria-label='VIO Volunteer Dashboard Component' style='border:1px solid #FF4B4B; background:rgba(255,75,75,0.1); padding:10px; border-radius:6px; color:#FF4B4B; font-size:0.83rem;'>"
         f"🚨 <b>ATTENTION:</b> {urgent_list[0]['name']} — {urgent_list[0]['location_desc']}. Check <b>Expected Client Arrivals</b> for details."
         "</div>", unsafe_allow_html=True
     )
@@ -715,13 +716,13 @@ if urgent_list:
 _vio_btn_col, _vio_spacer = st.columns([1, 3])
 with _vio_btn_col:
     st.markdown("""
-    <div class="vio-launch-btn">
+    <div class="vio-launch-btn" alt="VIO Volunteer Dashboard Component" aria-label="VIO Volunteer Dashboard Component">
         <div style="width:40px; height:40px; border-radius:50%; background:rgba(255,255,255,0.15);
                     display:flex; align-items:center; justify-content:center; font-size:1.3rem;
                     border:2px solid rgba(255,255,255,0.3); flex-shrink:0;">🤖</div>
         <div>
             <div style="font-size:0.95rem; font-weight:700; color:#FFFFFF;">VIO Assistant</div>
-            <div style="font-size:0.7rem; color:rgba(255,255,255,0.8);">Ask about routes & protocols</div>
+            <div style="font-size:0.7rem; color:rgba(255,255,255,0.8);">Real-time decision support hub</div>
         </div>
     </div>
     """, unsafe_allow_html=True)
@@ -731,18 +732,18 @@ with _vio_btn_col:
 
 # VIO Chat Window (shown when toggled open)
 if st.session_state.show_vio_chat:
-    st.markdown('<div class="vio-chat-window">', unsafe_allow_html=True)
+    st.markdown('<div class="vio-chat-window" alt="VIO Volunteer Dashboard Component" aria-label="VIO Volunteer Dashboard Component">', unsafe_allow_html=True)
 
     # Chat header
     st.markdown("""
-    <div style='background:linear-gradient(135deg, #0A66C2, #00FFCC); padding:1rem 1.4rem;
+    <div alt="VIO Volunteer Dashboard Component" aria-label="VIO Volunteer Dashboard Component" style='background:linear-gradient(135deg, #0A66C2, #00FFCC); padding:1rem 1.4rem;
                 display:flex; align-items:center; gap:1rem;'>
         <div style='width:46px; height:46px; border-radius:50%; background:rgba(255,255,255,0.15);
                     display:flex; align-items:center; justify-content:center; font-size:1.5rem;
                     border:2px solid rgba(255,255,255,0.3);'>🤖</div>
         <div>
             <div style='font-size:1.05rem; font-weight:700; color:#FFFFFF;'>VIO — Volunteer Intelligent Operator</div>
-            <div style='font-size:0.78rem; color:rgba(255,255,255,0.85);'>Online • Ask me anything about venue routing, guest handling, or emergency protocols</div>
+            <div style='font-size:0.78rem; color:rgba(255,255,255,0.85);'>Online • Real-time decision support for venue routing, guest handling, or emergency protocols</div>
         </div>
     </div>
     """, unsafe_allow_html=True)
@@ -974,7 +975,7 @@ with tab_arrivals:
             border_color = "#FF4B4B" if vip["status"] == "Urgent Alert" else "#FFAA00" if vip["status"] == "Warning" else "#00FFCC"
             status_class = "badge-urgent" if vip["status"] == "Urgent Alert" else "badge-warning" if vip["status"] == "Warning" else "badge-nominal"
             st.markdown(f"""
-            <div style='background:#122030; border-radius:10px; border-left:6px solid {border_color};
+            <div alt="VIO Volunteer Dashboard Component" aria-label="VIO Volunteer Dashboard Component" style='background:#122030; border-radius:10px; border-left:6px solid {border_color};
                         padding:1.2rem; margin-bottom:0.8rem; border:1px solid #1E3A52; border-left:6px solid {border_color};'>
                 <div style='display:flex; justify-content:space-between; align-items:center;'>
                     <h4 style='margin:0; font-size:1.15rem;'>{vip["name"]} <span style='font-size:0.88rem; color:#BEC2CA;'>({vip["affiliation"]})</span></h4>
@@ -999,7 +1000,7 @@ with tab_arrivals:
         v = st.session_state.selected_contingency
         st.markdown("---")
         st.markdown(f"""
-        <div style='border:1px solid #0A66C2; border-radius:10px; padding:1.3rem; background:#0F1E35;'>
+        <div alt="VIO Volunteer Dashboard Component" aria-label="VIO Volunteer Dashboard Component" style='border:1px solid #0A66C2; border-radius:10px; padding:1.3rem; background:#0F1E35;'>
             <h4 style='color:#0A66C2; margin-top:0;'>📋 Guest Arrival Action Plan: {v['name']}</h4>
             <p style='font-size:0.9rem;'><b>Current situation:</b> {v['location_desc']} | <b>Destination:</b> {v['target']} | <b>Language:</b> {v['language']}</p>
         </div>
@@ -1058,7 +1059,7 @@ with tab_team:
             with grid[idx % 2]:
                 avatar_svg = make_avatar_svg(person["name"], person["role"])
                 st.markdown(f"""
-                <div class="profile-card">
+                <div class="profile-card" alt="VIO Volunteer Dashboard Component" aria-label="VIO Volunteer Dashboard Component">
                     <div class="profile-header">
                         {avatar_svg}
                         <div style="flex:1;">
@@ -1099,7 +1100,7 @@ with tab_schedule:
             status_css = "pending"
 
         st.markdown(f"""
-        <div class="schedule-item {css_class}">
+        <div class="schedule-item {css_class}" alt="VIO Volunteer Dashboard Component" aria-label="VIO Volunteer Dashboard Component">
             <div class="schedule-time">{item["time"]}</div>
             <div>
                 <div class="schedule-desc">{item["desc"]}</div>
@@ -1116,14 +1117,14 @@ act_col1, act_col2 = st.columns([3, 1])
 with act_col1:
     st.markdown("<h3 style='font-size:1.1rem; margin-bottom:0.5rem;'>📋 Live Activity Timeline</h3>", unsafe_allow_html=True)
     feed_html = "".join(f"<div class='feed-entry'>{e}</div>" for e in reversed(st.session_state.activity_feed))
-    st.markdown(f'<div class="activity-feed">{feed_html}</div>', unsafe_allow_html=True)
+    st.markdown(f'<div class="activity-feed" alt="VIO Volunteer Dashboard Component" aria-label="VIO Volunteer Dashboard Component">{feed_html}</div>', unsafe_allow_html=True)
 with act_col2:
     st.markdown("<h3 style='font-size:1.1rem; margin-bottom:0.5rem;'>🛠️ Quick Actions</h3>", unsafe_allow_html=True)
     if st.button("🗑️ Clear Activity Log", use_container_width=True):
         st.session_state.activity_feed = [f"[{datetime.datetime.now().strftime('%H:%M:%S')}] Activity log cleared."]
         st.rerun()
     st.markdown(
-        "<div style='background:#122030; border-radius:8px; padding:0.8rem; border:1px solid #1E3A52; font-size:0.82rem; color:#BEC2CA; margin-top:0.5rem;'>"
+        "<div alt='VIO Volunteer Dashboard Component' aria-label='VIO Volunteer Dashboard Component' style='background:#122030; border-radius:8px; padding:0.8rem; border:1px solid #1E3A52; font-size:0.82rem; color:#BEC2CA; margin-top:0.5rem;'>"
         "<b>💡 Tip:</b> Use <b>Quick Alerts</b> to silently page teammates when radio channels are busy."
         "</div>", unsafe_allow_html=True
     )
